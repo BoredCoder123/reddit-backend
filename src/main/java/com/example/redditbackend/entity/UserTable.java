@@ -7,6 +7,7 @@ import lombok.Setter;
 
 import javax.persistence.*;
 import java.util.Date;
+import java.util.List;
 
 @Getter
 @Setter
@@ -37,4 +38,10 @@ public class UserTable {
 
     @Column(name = "last_logged_in", nullable = false)
     private Date lastLoggedIn;
+
+    @OneToMany(mappedBy = "creatorId")
+    private List<CommunityTable> creatorCommunity;
+
+    @OneToMany(mappedBy = "currentOwner")
+    private List<CommunityTable> ownerCommunity;
 }

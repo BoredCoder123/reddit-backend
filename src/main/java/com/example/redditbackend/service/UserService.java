@@ -1,7 +1,10 @@
 package com.example.redditbackend.service;
 
+import com.example.redditbackend.entity.CommunityTable;
 import com.example.redditbackend.entity.UserTable;
+import com.example.redditbackend.repository.CommunityTableRepository;
 import com.example.redditbackend.repository.UserTableRepository;
+import com.example.redditbackend.request.CommunityRequest;
 import com.example.redditbackend.request.LoginRequest;
 import com.example.redditbackend.request.RegisterRequest;
 import com.example.redditbackend.utility.SHA256;
@@ -9,13 +12,18 @@ import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import javax.transaction.Transactional;
 import java.util.Date;
+import java.util.Optional;
 
 @Service
 @Log4j2
 public class UserService {
     @Autowired
     private UserTableRepository userTableRepository;
+
+    @Autowired
+    private CommunityTableRepository communityTableRepository;
 
     public String register(RegisterRequest registerRequest) throws Exception{
         try{
@@ -52,6 +60,29 @@ public class UserService {
         }catch (Exception e){
             log.error(e.toString());
             throw new Exception(e.toString());
+        }
+    }
+
+    public String createComponent(CommunityRequest communityRequest) throws Exception{
+        try{
+            Optional<UserTable> checkUser = userTableRepository.findById(communityRequest.getCreatorId());
+            if(!checkUser.isPresent())
+                throw new Exception("Unable to find creator id");
+            CommunityTable checkExistingCommunity = communityTableRepository.findByCommunityName(communityRequest.getCommunityName());
+            if(checkExistingCommunity != null)
+                throw new Exception("Community name already exists");
+            CommunityTable communityTable = new CommunityTable();
+            communityTable.setCommunityName(communityRequest.getCommunityName());
+            communityTable.setCurrentOwner(checkUser.get());
+            communityTable.setCreationDate(new Date());
+            communityTable.setRules(communityRequest.getRules());
+            communityTable.setCreatorId(checkUser.get());
+            log.error(checkUser.get().getUserId());
+            communityTableRepository.save(communityTable);
+            return "Community created";
+        }catch (Exception e){
+            log.error(e.toString());
+            throw new Exception("Unable to create community due to: "+e.toString());
         }
     }
 }

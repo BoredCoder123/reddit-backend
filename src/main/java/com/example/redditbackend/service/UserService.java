@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 
 import javax.transaction.Transactional;
 import java.util.Date;
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -83,6 +84,15 @@ public class UserService {
         }catch (Exception e){
             log.error(e.toString());
             throw new Exception("Unable to create community due to: "+e.toString());
+        }
+    }
+
+    public List<CommunityTable> getAllCommunities() throws Exception{
+        try{
+            return communityTableRepository.findAll();
+        }catch (Exception e){
+            log.error(e.toString());
+            throw new Exception("Unable to fetch community due to: "+e.toString());
         }
     }
 }

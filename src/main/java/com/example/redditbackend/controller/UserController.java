@@ -1,5 +1,6 @@
 package com.example.redditbackend.controller;
 
+import com.example.redditbackend.entity.CommunityTable;
 import com.example.redditbackend.request.CommunityRequest;
 import com.example.redditbackend.request.LoginRequest;
 import com.example.redditbackend.request.RegisterRequest;
@@ -12,6 +13,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Date;
+import java.util.List;
 
 @RestController
 @Log4j2
@@ -55,6 +57,16 @@ public class UserController {
         }catch(Exception e){
             log.error(e.toString());
             return new ResponseEntity<String>("Unable to create community", HttpStatus.CONFLICT);
+        }
+    }
+
+    @GetMapping("/community")
+    public ResponseEntity getAllCommunities(){
+        try{
+            return new ResponseEntity<>(userService.getAllCommunities(), HttpStatus.OK);
+        }catch (Exception e){
+            log.error(e.toString());
+            return new ResponseEntity<String>("Unable to fetch all communities", HttpStatus.CONFLICT);
         }
     }
 }

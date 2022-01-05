@@ -2,6 +2,7 @@ package com.example.redditbackend.service;
 
 import com.example.redditbackend.entity.UserTable;
 import com.example.redditbackend.repository.UserTableRepository;
+import com.example.redditbackend.request.LoginRequest;
 import com.example.redditbackend.request.RegisterRequest;
 import com.example.redditbackend.utility.SHA256;
 import lombok.extern.log4j.Log4j2;
@@ -33,6 +34,21 @@ public class UserService {
             newUser.setLastLoggedIn(new Date());
             userTableRepository.save(newUser);
             return "User registered successfully";
+        }catch (Exception e){
+            log.error(e.toString());
+            throw new Exception(e.toString());
+        }
+    }
+
+    public String login(LoginRequest loginRequest) throws Exception{
+        try{
+            UserTable checkUser = userTableRepository.findByUsername(loginRequest.getUsername());
+            if(checkUser == null)
+                throw new Exception("Unable to find username");
+            String hashedPassword = SHA256.toHexString(SHA256.getSHA(loginRequest.getPassword()));
+            if(hashedPassword.equals(checkUser.getHashedPassword()))
+                return "User logged in";
+            throw new Exception("Password don't match");
         }catch (Exception e){
             log.error(e.toString());
             throw new Exception(e.toString());

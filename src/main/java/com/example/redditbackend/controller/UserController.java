@@ -1,5 +1,6 @@
 package com.example.redditbackend.controller;
 
+import com.example.redditbackend.request.LoginRequest;
 import com.example.redditbackend.request.RegisterRequest;
 import com.example.redditbackend.response.HeartbeatResponse;
 import com.example.redditbackend.service.UserService;
@@ -35,6 +36,17 @@ public class UserController {
         }catch(Exception e){
             log.error(e.toString());
             return new ResponseEntity("Unable to register", HttpStatus.CONFLICT);
+        }
+    }
+
+    @PostMapping("/u/login")
+    public ResponseEntity login(@RequestBody LoginRequest loginRequest){
+        try{
+            String response = userService.login(loginRequest);
+            return new ResponseEntity(response, HttpStatus.OK);
+        }catch(Exception e){
+            log.error(e.toString());
+            return new ResponseEntity("Unable to login", HttpStatus.CONFLICT);
         }
     }
 }

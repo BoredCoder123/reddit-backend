@@ -1,5 +1,6 @@
 package com.example.redditbackend.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -7,6 +8,7 @@ import lombok.Setter;
 
 import javax.persistence.*;
 import java.util.Date;
+import java.util.List;
 
 @Getter
 @Setter
@@ -26,8 +28,10 @@ public class CommunityTable {
     @Column(name = "creation_date", nullable = false)
     private Date creationDate;
 
-    @Column(name = "rules", columnDefinition = "text")
-    private String[] rules;
+    @ElementCollection
+    @OrderColumn
+    @Column(name = "rules")
+    private List<String> rules;
 
     @ManyToOne
     @JoinColumn(name = "creator_id", nullable = false)

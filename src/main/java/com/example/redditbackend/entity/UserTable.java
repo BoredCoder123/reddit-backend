@@ -1,5 +1,7 @@
 package com.example.redditbackend.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -40,8 +42,10 @@ public class UserTable {
     private Date lastLoggedIn;
 
     @OneToMany(mappedBy = "creatorId")
+    @JsonIgnore
     private List<CommunityTable> creatorCommunity;
 
     @OneToMany(mappedBy = "currentOwner")
+    @JsonIgnore
     private List<CommunityTable> ownerCommunity;
 }

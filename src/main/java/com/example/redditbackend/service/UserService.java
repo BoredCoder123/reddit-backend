@@ -7,12 +7,14 @@ import com.example.redditbackend.repository.UserTableRepository;
 import com.example.redditbackend.request.CommunityRequest;
 import com.example.redditbackend.request.LoginRequest;
 import com.example.redditbackend.request.RegisterRequest;
+import com.example.redditbackend.response.CommunityResponse;
 import com.example.redditbackend.utility.SHA256;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import javax.transaction.Transactional;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
@@ -87,9 +89,15 @@ public class UserService {
         }
     }
 
-    public List<CommunityTable> getAllCommunities() throws Exception{
+    public List<CommunityResponse> getAllCommunities() throws Exception{
         try{
-            return communityTableRepository.findAll();
+            List<CommunityTable> communityTableList =  communityTableRepository.findAll();
+            List<CommunityResponse> result = new ArrayList<>();
+            for (CommunityTable c:communityTableList) {
+                CommunityResponse cr = new CommunityResponse(c.getCommunityId(), c.getCommunityName(), c.getCreationDate(), c.getRules(), c.getCreatorId().getUserId(), c.getCurrentOwner().getUserId());
+                result.add(cr);
+            }
+            return result;
         }catch (Exception e){
             log.error(e.toString());
             throw new Exception("Unable to fetch community due to: "+e.toString());

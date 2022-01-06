@@ -12,6 +12,7 @@ import com.example.redditbackend.utility.SHA256;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import sun.reflect.annotation.ExceptionProxy;
 
 import javax.transaction.Transactional;
 import java.util.ArrayList;
@@ -94,7 +95,27 @@ public class UserService {
             List<CommunityTable> communityTableList =  communityTableRepository.findAll();
             List<CommunityResponse> result = new ArrayList<>();
             for (CommunityTable c:communityTableList) {
-                CommunityResponse cr = new CommunityResponse(c.getCommunityId(), c.getCommunityName(), c.getCreationDate(), c.getRules(), c.getCreatorId().getUserId(), c.getCurrentOwner().getUserId());
+                CommunityResponse cr = new CommunityResponse(c.getCommunityId(), c.getCommunityName(),
+                        c.getCreationDate(), c.getRules(), c.getCreatorId().getUserId(), c.getCurrentOwner().getUserId());
+                result.add(cr);
+            }
+            return result;
+        }catch (Exception e){
+            log.error(e.toString());
+            throw new Exception("Unable to fetch community due to: "+e.toString());
+        }
+    }
+
+    public List<CommunityResponse> getAllCommunities(String username) throws Exception{
+        try{
+            UserTable userTable = userTableRepository.findByUsername(username);
+            if(userTable == null)
+                throw new Exception("Unable to find username");
+            List<CommunityResponse> result = new ArrayList<>();
+            List<CommunityTable> communityTableList = communityTableRepository.findByCurrentOwner(userTable);
+            for (CommunityTable c:communityTableList) {
+                CommunityResponse cr = new CommunityResponse(c.getCommunityId(), c.getCommunityName(),
+                        c.getCreationDate(), c.getRules(), c.getCreatorId().getUserId(), c.getCurrentOwner().getUserId());
                 result.add(cr);
             }
             return result;

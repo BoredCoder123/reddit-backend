@@ -124,4 +124,23 @@ public class UserService {
             throw new Exception("Unable to fetch community due to: "+e.toString());
         }
     }
+
+    public List<CommunityResponse> getAllCommunitiesByCreatorId(String username) throws Exception{
+        try{
+            UserTable userTable = userTableRepository.findByUsername(username);
+            if(userTable == null)
+                throw new Exception("Unable to find username");
+            List<CommunityResponse> result = new ArrayList<>();
+            List<CommunityTable> communityTableList = communityTableRepository.findByCreatorId(userTable);
+            for (CommunityTable c:communityTableList) {
+                CommunityResponse cr = new CommunityResponse(c.getCommunityId(), c.getCommunityName(),
+                        c.getCreationDate(), c.getRules(), c.getCreatorId().getUserId(), c.getCurrentOwner().getUserId());
+                result.add(cr);
+            }
+            return result;
+        }catch (Exception e){
+            log.error(e.toString());
+            throw new Exception("Unable to fetch community due to: "+e.toString());
+        }
+    }
 }

@@ -9,4 +9,5 @@ import java.util.List;
 public interface CommunityTableRepository extends JpaRepository<CommunityTable, Integer> {
     public CommunityTable findByCommunityName(String communityName);
     public List<CommunityTable> findByCurrentOwner(UserTable userTable);
+    public List<CommunityTable> findByCreatorId(UserTable userTable);
 }

@@ -79,4 +79,14 @@ public class UserController {
             return new ResponseEntity<String>("Unable to fetch all communities", HttpStatus.CONFLICT);
         }
     }
+
+    @GetMapping("/community/creator/{username}")
+    public ResponseEntity getCommunitiesByCreatorId(@PathVariable String username){
+        try{
+            return new ResponseEntity<>(userService.getAllCommunitiesByCreatorId(username), HttpStatus.OK);
+        }catch (Exception e){
+            log.error(e.toString());
+            return new ResponseEntity<String>("Unable to fetch all communities", HttpStatus.CONFLICT);
+        }
+    }
 }

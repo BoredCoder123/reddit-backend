@@ -1,5 +1,6 @@
 package com.example.redditbackend.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -40,4 +41,8 @@ public class CommunityTable {
     @ManyToOne
     @JoinColumn(name = "current_owner", nullable = false)
     private UserTable currentOwner;
+
+    @OneToMany(mappedBy = "communityId")
+    @JsonIgnore
+    private List<NormalUserCommunityTable> listOfCommunities;
 }

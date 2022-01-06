@@ -48,4 +48,8 @@ public class UserTable {
     @OneToMany(mappedBy = "currentOwner")
     @JsonIgnore
     private List<CommunityTable> ownerCommunity;
+
+    @OneToMany(mappedBy = "userId")
+    @JsonIgnore
+    private List<NormalUserCommunityTable> listOfNormalUsers;
 }

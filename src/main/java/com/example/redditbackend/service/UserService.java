@@ -1,6 +1,7 @@
 package com.example.redditbackend.service;
 
 import com.example.redditbackend.entity.CommunityTable;
+import com.example.redditbackend.entity.NormalUserCommunityTable;
 import com.example.redditbackend.entity.UserTable;
 import com.example.redditbackend.repository.CommunityTableRepository;
 import com.example.redditbackend.repository.UserTableRepository;
@@ -82,7 +83,14 @@ public class UserService {
             communityTable.setRules(communityRequest.getRules());
             communityTable.setCreatorId(checkUser.get());
             log.error(checkUser.get().getUserId());
-            communityTableRepository.save(communityTable);
+            CommunityTable savedCommunity=communityTableRepository.save(communityTable);
+
+            NormalUserCommunityTable normalUserCommunityTable = new NormalUserCommunityTable();
+            normalUserCommunityTable.setCommunityId(savedCommunity);
+            normalUserCommunityTable.setUserId(checkUser.get());
+            normalUserCommunityTable.setIsUserBanned(false);
+            normalUserCommunityTable.setJoinDate(new Date());
+
             return "Community created";
         }catch (Exception e){
             log.error(e.toString());

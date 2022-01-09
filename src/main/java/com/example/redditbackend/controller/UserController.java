@@ -6,6 +6,8 @@ import com.example.redditbackend.request.CommunityRequest;
 import com.example.redditbackend.request.LoginRequest;
 import com.example.redditbackend.request.RegisterRequest;
 import com.example.redditbackend.response.HeartbeatResponse;
+import com.example.redditbackend.response.LoginResponse;
+import com.example.redditbackend.response.RegisterResponse;
 import com.example.redditbackend.service.UserService;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,10 +31,10 @@ public class UserController {
     }
 
     @PostMapping("/u/register")
-    public ResponseEntity<String> register(@RequestBody RegisterRequest registerRequest){
+    public ResponseEntity register(@RequestBody RegisterRequest registerRequest){
         try{
-            String response = userService.register(registerRequest);
-            return new ResponseEntity<String>(response, HttpStatus.OK);
+            RegisterResponse response = userService.register(registerRequest);
+            return new ResponseEntity<RegisterResponse>(response, HttpStatus.OK);
         }catch(Exception e){
             log.error(e.toString());
             return new ResponseEntity<String>("Unable to register", HttpStatus.CONFLICT);
@@ -40,10 +42,10 @@ public class UserController {
     }
 
     @PostMapping("/u/login")
-    public ResponseEntity<String> login(@RequestBody LoginRequest loginRequest){
+    public ResponseEntity login(@RequestBody LoginRequest loginRequest){
         try{
-            String response = userService.login(loginRequest);
-            return new ResponseEntity<String>(response, HttpStatus.OK);
+            LoginResponse response = userService.login(loginRequest);
+            return new ResponseEntity(response, HttpStatus.OK);
         }catch(Exception e){
             log.error(e.toString());
             return new ResponseEntity<String>("Unable to login", HttpStatus.CONFLICT);
@@ -51,9 +53,9 @@ public class UserController {
     }
 
     @PostMapping("/create-community")
-    public ResponseEntity createComponent(@RequestBody CommunityRequest communityRequest){
+    public ResponseEntity createCommunity(@RequestBody CommunityRequest communityRequest){
         try{
-            return new ResponseEntity(userService.createComponent(communityRequest), HttpStatus.OK);
+            return new ResponseEntity(userService.createCommunity(communityRequest), HttpStatus.OK);
         }catch(Exception e){
             log.error(e.toString());
             return new ResponseEntity<String>("Unable to create community", HttpStatus.CONFLICT);
@@ -93,7 +95,7 @@ public class UserController {
     @PostMapping("/join-community/{userId}/{communityId}")
     public ResponseEntity joinCommunity(@PathVariable Integer userId, @PathVariable Integer communityId){
         try{
-            return new ResponseEntity<NormalUserCommunityTable>(userService.joinCommunity(userId, communityId), HttpStatus.OK);
+            return new ResponseEntity<>(userService.joinCommunity(userId, communityId), HttpStatus.OK);
         }catch (Exception e){
             log.error(e.toString());
             return new ResponseEntity<String>("Unable to join community", HttpStatus.CONFLICT);

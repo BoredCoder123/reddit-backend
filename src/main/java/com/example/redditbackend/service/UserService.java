@@ -5,7 +5,7 @@ import com.example.redditbackend.repository.*;
 import com.example.redditbackend.request.CommunityRequest;
 import com.example.redditbackend.request.LoginRequest;
 import com.example.redditbackend.request.RegisterRequest;
-import com.example.redditbackend.response.CommunityResponse;
+import com.example.redditbackend.response.*;
 import com.example.redditbackend.utility.SHA256;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,7 +36,7 @@ public class UserService {
     @Autowired
     private NormalUserCommunityTableRepository normalUserCommunityTableRepository;
 
-    public String register(RegisterRequest registerRequest) throws Exception{
+    public RegisterResponse register(RegisterRequest registerRequest) throws Exception{
         try{
             UserTable checkExistingUser = userTableRepository.findByEmail(registerRequest.getEmail());
             if(checkExistingUser != null)
@@ -52,21 +52,21 @@ public class UserService {
             newUser.setJoinDate(new Date());
             newUser.setLastLoggedIn(new Date());
             userTableRepository.save(newUser);
-            return "User registered successfully";
+            return new RegisterResponse("User registered successfully");
         }catch (Exception e){
             log.error(e.toString());
             throw new Exception(e.toString());
         }
     }
 
-    public String login(LoginRequest loginRequest) throws Exception{
+    public LoginResponse login(LoginRequest loginRequest) throws Exception{
         try{
             UserTable checkUser = userTableRepository.findByUsername(loginRequest.getUsername());
             if(checkUser == null)
                 throw new Exception("Unable to find username");
             String hashedPassword = SHA256.toHexString(SHA256.getSHA(loginRequest.getPassword()));
             if(hashedPassword.equals(checkUser.getHashedPassword()))
-                return "User logged in";
+                return new LoginResponse("User logged in");
             throw new Exception("Password don't match");
         }catch (Exception e){
             log.error(e.toString());
@@ -74,7 +74,7 @@ public class UserService {
         }
     }
 
-    public CommunityTable createComponent(CommunityRequest communityRequest) throws Exception{
+    public CreateCommunityResponse createCommunity(CommunityRequest communityRequest) throws Exception{
         try{
             Optional<UserTable> checkUser = userTableRepository.findById(communityRequest.getCreatorId());
             if(!checkUser.isPresent())
@@ -96,8 +96,12 @@ public class UserService {
             normalUserCommunityTable.setUserId(checkUser.get());
             normalUserCommunityTable.setIsUserBanned(false);
             normalUserCommunityTable.setJoinDate(new Date());
-            normalUserCommunityTableRepository.save(normalUserCommunityTable);
-            return savedCommunity;
+            NormalUserCommunityTable savedUser = normalUserCommunityTableRepository.save(normalUserCommunityTable);
+
+            CreateCommunityResponse response = new CreateCommunityResponse(savedCommunity.getCommunityId(), savedCommunity.getCommunityName(),
+                    savedCommunity.getCreationDate(), savedCommunity.getCreatorId().getUserId(), savedCommunity.getCurrentOwner().getUserId(), savedUser.getUserId().getUserId());
+
+            return response;
         }catch (Exception e){
             log.error(e.toString());
             throw new Exception("Unable to create community due to: "+e.toString());
@@ -158,7 +162,7 @@ public class UserService {
         }
     }
 
-    public NormalUserCommunityTable joinCommunity(Integer userId, Integer communityId) throws Exception{
+    public JoinCommunityResponse joinCommunity(Integer userId, Integer communityId) throws Exception{
         try{
             Optional<UserTable> checkUser = userTableRepository.findById(userId);
             if(!checkUser.isPresent())
@@ -166,20 +170,27 @@ public class UserService {
             Optional<CommunityTable> checkCommunity = communityTableRepository.findById(communityId);
             if(!checkCommunity.isPresent())
                 throw new Exception("Community not found");
+            NormalUserCommunityTable existingUser = normalUserCommunityTableRepository.findByUserIdAndCommunityId(checkUser.get(), checkCommunity.get());
+            if(existingUser != null)
+                throw new Exception("User already exists in the community");
             NormalUserCommunityTable normalUserCommunityTable = new NormalUserCommunityTable();
             normalUserCommunityTable.setUserId(checkUser.get());
             normalUserCommunityTable.setCommunityId(checkCommunity.get());
             normalUserCommunityTable.setIsUserBanned(false);
             normalUserCommunityTable.setJoinDate(new Date());
             NormalUserCommunityTable savedJoinUser = normalUserCommunityTableRepository.save(normalUserCommunityTable);
-            return savedJoinUser;
+
+            JoinCommunityResponse response = new JoinCommunityResponse(savedJoinUser.getNormalUserCommunityId(), savedJoinUser.getUserId().getUserId(),
+                    savedJoinUser.getCommunityId().getCommunityId(), savedJoinUser.getJoinDate(), savedJoinUser.getIsUserBanned());
+
+            return response;
         }catch (Exception e){
             log.error(e.toString());
             throw new Exception("Unable to join community due to: "+e.toString());
         }
     }
 
-    public ModUserCommunityTable promoteToMod(Integer userId, Integer communityId, Integer promoterId) throws Exception{
+    public PromoteToModResponse promoteToMod(Integer userId, Integer communityId, Integer promoterId) throws Exception{
         try{
             Optional<UserTable> checkUser = userTableRepository.findById(userId);
             if(!checkUser.isPresent())
@@ -204,14 +215,18 @@ public class UserService {
             modUserCommunityTable.setCurrentlyActiveMod(true);
             modUserCommunityTable.setPromotedBy(checkPromoter.get());
             ModUserCommunityTable savedMod = modUserCommunityTableRepository.save(modUserCommunityTable);
-            return savedMod;
+
+            PromoteToModResponse promoteToModResponse = new PromoteToModResponse(savedMod.getModUserId(), savedMod.getUserId().getUserId(), savedMod.getCommunityTable()
+                    .getCommunityId(), savedMod.getBecomeModDate(), savedMod.getPromotedBy().getUserId(), savedMod.getCurrentlyActiveMod(), savedMod.getStatusChange());
+
+            return promoteToModResponse;
         }catch(Exception e){
             log.error(e);
             throw new Exception("Unable to promote to mod because: "+e.toString());
         }
     }
 
-    public ModUserCommunityTable demoteFromMod(Integer userId, Integer communityId, Integer demoterId) throws Exception{
+    public PromoteToModResponse demoteFromMod(Integer userId, Integer communityId, Integer demoterId) throws Exception{
         try{
             Optional<UserTable> checkUser = userTableRepository.findById(userId);
             if(!checkUser.isPresent())
@@ -233,7 +248,10 @@ public class UserService {
             checkMod.setStatusChange(new Date());
             checkMod.setPromotedBy(checkDemoter.get());
             ModUserCommunityTable savedMod = modUserCommunityTableRepository.save(checkMod);
-            return savedMod;
+
+            PromoteToModResponse demotedFromModResponse = new PromoteToModResponse(savedMod.getModUserId(), savedMod.getUserId().getUserId(), savedMod.getCommunityTable()
+                    .getCommunityId(), savedMod.getBecomeModDate(), savedMod.getPromotedBy().getUserId(), savedMod.getCurrentlyActiveMod(), savedMod.getStatusChange());
+            return demotedFromModResponse;
         }catch(Exception e){
             log.error(e);
             throw new Exception("Unable to demote from mod because: "+e.toString());

@@ -194,6 +194,9 @@ public class UserService {
             CoOwnerUserCommunityTable checkCoOwner = coOwnerUserCommunityTableRepository.findByUserIdAndCommunityId(checkPromoter.get(), checkCommunity.get());
             if(checkOwner == null && checkCoOwner == null)
                 throw new Exception("Unable to find userid either as a owner or a co-owner of the community provided");
+            NormalUserCommunityTable checkUserInCommunity = normalUserCommunityTableRepository.findByUserIdAndCommunityId(checkUser.get(), checkCommunity.get());
+            if(checkUserInCommunity==null)
+                throw new Exception("Unable to find user in the community");
             ModUserCommunityTable modUserCommunityTable = new ModUserCommunityTable();
             modUserCommunityTable.setCommunityTable(checkCommunity.get());
             modUserCommunityTable.setUserId(checkUser.get());
@@ -205,6 +208,35 @@ public class UserService {
         }catch(Exception e){
             log.error(e);
             throw new Exception("Unable to promote to mod because: "+e.toString());
+        }
+    }
+
+    public ModUserCommunityTable demoteFromMod(Integer userId, Integer communityId, Integer demoterId) throws Exception{
+        try{
+            Optional<UserTable> checkUser = userTableRepository.findById(userId);
+            if(!checkUser.isPresent())
+                throw new Exception("User not found");
+            Optional<CommunityTable> checkCommunity = communityTableRepository.findById(communityId);
+            if(!checkCommunity.isPresent())
+                throw new Exception("Community not found");
+            Optional<UserTable> checkDemoter = userTableRepository.findById(demoterId);
+            if(!checkDemoter.isPresent())
+                throw new Exception("Demoter not present");
+            CommunityTable checkOwner = communityTableRepository.findByCurrentOwnerAndCommunityId(checkDemoter.get(), checkCommunity.get());
+            CoOwnerUserCommunityTable checkCoOwner = coOwnerUserCommunityTableRepository.findByUserIdAndCommunityId(checkDemoter.get(), checkCommunity.get());
+            if(checkOwner == null && checkCoOwner == null)
+                throw new Exception("Unable to find userid either as a owner or a co-owner of the community provided");
+            ModUserCommunityTable checkMod = modUserCommunityTableRepository.findByCommunityTableAndUserId(checkCommunity.get(), checkUser.get());
+            if(checkMod == null)
+                throw new Exception("Unable to find the mod in the community mentioned");
+            checkMod.setCurrentlyActiveMod(false);
+            checkMod.setStatusChange(new Date());
+            checkMod.setPromotedBy(checkDemoter.get());
+            ModUserCommunityTable savedMod = modUserCommunityTableRepository.save(checkMod);
+            return savedMod;
+        }catch(Exception e){
+            log.error(e);
+            throw new Exception("Unable to demote from mod because: "+e.toString());
         }
     }
 }

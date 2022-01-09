@@ -201,20 +201,37 @@ public class UserService {
             Optional<UserTable> checkPromoter = userTableRepository.findById(promoterId);
             if(!checkPromoter.isPresent())
                 throw new Exception("Promoter not present");
-            CommunityTable checkOwner = communityTableRepository.findByCurrentOwnerAndCommunityId(checkPromoter.get(), checkCommunity.get());
+            CommunityTable checkOwner = communityTableRepository.findByCurrentOwnerAndCommunityId(checkPromoter.get(), checkCommunity.get().getCommunityId());
             CoOwnerUserCommunityTable checkCoOwner = coOwnerUserCommunityTableRepository.findByUserIdAndCommunityId(checkPromoter.get(), checkCommunity.get());
             if(checkOwner == null && checkCoOwner == null)
                 throw new Exception("Unable to find userid either as a owner or a co-owner of the community provided");
             NormalUserCommunityTable checkUserInCommunity = normalUserCommunityTableRepository.findByUserIdAndCommunityId(checkUser.get(), checkCommunity.get());
             if(checkUserInCommunity==null)
                 throw new Exception("Unable to find user in the community");
-            ModUserCommunityTable modUserCommunityTable = new ModUserCommunityTable();
-            modUserCommunityTable.setCommunityTable(checkCommunity.get());
-            modUserCommunityTable.setUserId(checkUser.get());
-            modUserCommunityTable.setBecomeModDate(new Date());
-            modUserCommunityTable.setCurrentlyActiveMod(true);
-            modUserCommunityTable.setPromotedBy(checkPromoter.get());
-            ModUserCommunityTable savedMod = modUserCommunityTableRepository.save(modUserCommunityTable);
+            ModUserCommunityTable checkExistingMod = modUserCommunityTableRepository.findByCommunityTableAndUserId(checkCommunity.get(), checkUser.get());
+            if(checkExistingMod != null && checkExistingMod.getCurrentlyActiveMod())
+                throw new Exception("Mod already exists");
+            ModUserCommunityTable savedMod;
+            if(checkExistingMod == null) {
+                ModUserCommunityTable modUserCommunityTable = new ModUserCommunityTable();
+                modUserCommunityTable.setCommunityTable(checkCommunity.get());
+                modUserCommunityTable.setUserId(checkUser.get());
+                modUserCommunityTable.setBecomeModDate(new Date());
+                modUserCommunityTable.setCurrentlyActiveMod(true);
+                modUserCommunityTable.setPromotedBy(checkPromoter.get());
+                savedMod = modUserCommunityTableRepository.save(modUserCommunityTable);
+            }else if(!checkExistingMod.getCurrentlyActiveMod()){
+                if(checkOwner == null)
+                    checkExistingMod.setPromotedBy(checkCoOwner.getUserId());
+                else
+                    checkExistingMod.setPromotedBy(checkOwner.getCurrentOwner());
+                checkExistingMod.setBecomeModDate(new Date());
+                checkExistingMod.setStatusChange(new Date());
+                checkExistingMod.setCurrentlyActiveMod(true);
+                savedMod = modUserCommunityTableRepository.save(checkExistingMod);
+            }else{
+                throw new Exception("Mod already exists");
+            }
 
             PromoteToModResponse promoteToModResponse = new PromoteToModResponse(savedMod.getModUserId(), savedMod.getUserId().getUserId(), savedMod.getCommunityTable()
                     .getCommunityId(), savedMod.getBecomeModDate(), savedMod.getPromotedBy().getUserId(), savedMod.getCurrentlyActiveMod(), savedMod.getStatusChange());
@@ -237,13 +254,15 @@ public class UserService {
             Optional<UserTable> checkDemoter = userTableRepository.findById(demoterId);
             if(!checkDemoter.isPresent())
                 throw new Exception("Demoter not present");
-            CommunityTable checkOwner = communityTableRepository.findByCurrentOwnerAndCommunityId(checkDemoter.get(), checkCommunity.get());
+            CommunityTable checkOwner = communityTableRepository.findByCurrentOwnerAndCommunityId(checkDemoter.get(), checkCommunity.get().getCommunityId());
             CoOwnerUserCommunityTable checkCoOwner = coOwnerUserCommunityTableRepository.findByUserIdAndCommunityId(checkDemoter.get(), checkCommunity.get());
             if(checkOwner == null && checkCoOwner == null)
                 throw new Exception("Unable to find userid either as a owner or a co-owner of the community provided");
             ModUserCommunityTable checkMod = modUserCommunityTableRepository.findByCommunityTableAndUserId(checkCommunity.get(), checkUser.get());
             if(checkMod == null)
                 throw new Exception("Unable to find the mod in the community mentioned");
+            if(!checkMod.getCurrentlyActiveMod())
+                throw new Exception("Mod not available");
             checkMod.setCurrentlyActiveMod(false);
             checkMod.setStatusChange(new Date());
             checkMod.setPromotedBy(checkDemoter.get());

@@ -1,6 +1,7 @@
 package com.example.redditbackend.controller;
 
 import com.example.redditbackend.entity.CommunityTable;
+import com.example.redditbackend.entity.NormalUserCommunityTable;
 import com.example.redditbackend.request.CommunityRequest;
 import com.example.redditbackend.request.LoginRequest;
 import com.example.redditbackend.request.RegisterRequest;
@@ -87,6 +88,16 @@ public class UserController {
         }catch (Exception e){
             log.error(e.toString());
             return new ResponseEntity<String>("Unable to fetch all communities", HttpStatus.CONFLICT);
+        }
+    }
+
+    @PostMapping("/join-community/{userId}/{communityId}")
+    public ResponseEntity joinCommunity(@PathVariable Integer userId, @PathVariable Integer communityId){
+        try{
+            return new ResponseEntity<NormalUserCommunityTable>(userService.joinCommunity(userId, communityId), HttpStatus.OK);
+        }catch (Exception e){
+            log.error(e.toString());
+            return new ResponseEntity<String>("Unable to join community", HttpStatus.CONFLICT);
         }
     }
 }

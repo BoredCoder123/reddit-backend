@@ -3,8 +3,7 @@ package com.example.redditbackend.service;
 import com.example.redditbackend.entity.CommunityTable;
 import com.example.redditbackend.entity.NormalUserCommunityTable;
 import com.example.redditbackend.entity.UserTable;
-import com.example.redditbackend.repository.CommunityTableRepository;
-import com.example.redditbackend.repository.UserTableRepository;
+import com.example.redditbackend.repository.*;
 import com.example.redditbackend.request.CommunityRequest;
 import com.example.redditbackend.request.LoginRequest;
 import com.example.redditbackend.request.RegisterRequest;
@@ -29,6 +28,15 @@ public class UserService {
 
     @Autowired
     private CommunityTableRepository communityTableRepository;
+
+    @Autowired
+    private CoOwnerUserCommunityTableRepository coOwnerUserCommunityTableRepository;
+
+    @Autowired
+    private ModUserCommunityTableRepository modUserCommunityTableRepository;
+
+    @Autowired
+    private NormalUserCommunityTableRepository normalUserCommunityTableRepository;
 
     public String register(RegisterRequest registerRequest) throws Exception{
         try{
@@ -149,6 +157,27 @@ public class UserService {
         }catch (Exception e){
             log.error(e.toString());
             throw new Exception("Unable to fetch community due to: "+e.toString());
+        }
+    }
+
+    public NormalUserCommunityTable joinCommunity(Integer userId, Integer communityId) throws Exception{
+        try{
+            Optional<UserTable> checkUser = userTableRepository.findById(userId);
+            if(!checkUser.isPresent())
+                throw new Exception("User not found");
+            Optional<CommunityTable> checkCommunity = communityTableRepository.findById(communityId);
+            if(!checkCommunity.isPresent())
+                throw new Exception("Community not found");
+            NormalUserCommunityTable normalUserCommunityTable = new NormalUserCommunityTable();
+            normalUserCommunityTable.setUserId(checkUser.get());
+            normalUserCommunityTable.setCommunityId(checkCommunity.get());
+            normalUserCommunityTable.setIsUserBanned(false);
+            normalUserCommunityTable.setJoinDate(new Date());
+            NormalUserCommunityTable savedJoinUser = normalUserCommunityTableRepository.save(normalUserCommunityTable);
+            return savedJoinUser;
+        }catch (Exception e){
+            log.error(e.toString());
+            throw new Exception("Unable to join community due to: "+e.toString());
         }
     }
 }

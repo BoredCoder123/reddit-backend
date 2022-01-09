@@ -74,7 +74,7 @@ public class UserService {
         }
     }
 
-    public String createComponent(CommunityRequest communityRequest) throws Exception{
+    public CommunityTable createComponent(CommunityRequest communityRequest) throws Exception{
         try{
             Optional<UserTable> checkUser = userTableRepository.findById(communityRequest.getCreatorId());
             if(!checkUser.isPresent())
@@ -96,8 +96,8 @@ public class UserService {
             normalUserCommunityTable.setUserId(checkUser.get());
             normalUserCommunityTable.setIsUserBanned(false);
             normalUserCommunityTable.setJoinDate(new Date());
-
-            return "Community created";
+            normalUserCommunityTableRepository.save(normalUserCommunityTable);
+            return savedCommunity;
         }catch (Exception e){
             log.error(e.toString());
             throw new Exception("Unable to create community due to: "+e.toString());

@@ -51,10 +51,9 @@ public class UserController {
     }
 
     @PostMapping("/create-community")
-    public ResponseEntity<String> createComponent(@RequestBody CommunityRequest communityRequest){
+    public ResponseEntity createComponent(@RequestBody CommunityRequest communityRequest){
         try{
-            String response = userService.createComponent(communityRequest);
-            return new ResponseEntity<String>(response, HttpStatus.OK);
+            return new ResponseEntity(userService.createComponent(communityRequest), HttpStatus.OK);
         }catch(Exception e){
             log.error(e.toString());
             return new ResponseEntity<String>("Unable to create community", HttpStatus.CONFLICT);

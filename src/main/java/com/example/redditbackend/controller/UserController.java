@@ -100,4 +100,14 @@ public class UserController {
             return new ResponseEntity<String>("Unable to join community", HttpStatus.CONFLICT);
         }
     }
+
+    @PostMapping("/promote-to-mod/{userId}/{communityId}/{promoterId}")
+    public ResponseEntity promoteToMod(@PathVariable Integer userId, @PathVariable Integer communityId, @PathVariable Integer promoterId){
+        try{
+            return new ResponseEntity(userService.promoteToMod(userId, communityId, promoterId), HttpStatus.OK);
+        }catch (Exception e){
+            log.error(e.toString());
+            return new ResponseEntity<String>("Unable to promote to mod", HttpStatus.CONFLICT);
+        }
+    }
 }

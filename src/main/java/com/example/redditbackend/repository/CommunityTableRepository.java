@@ -10,4 +10,5 @@ public interface CommunityTableRepository extends JpaRepository<CommunityTable, 
     public CommunityTable findByCommunityName(String communityName);
     public List<CommunityTable> findByCurrentOwner(UserTable userTable);
     public List<CommunityTable> findByCreatorId(UserTable userTable);
+    public CommunityTable findByCurrentOwnerAndCommunityId(UserTable currentOwner, CommunityTable communityId);
 }

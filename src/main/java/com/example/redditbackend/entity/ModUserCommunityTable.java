@@ -33,7 +33,7 @@ public class ModUserCommunityTable {
 
     @ManyToOne
     @JoinColumn(name = "promoted_by", nullable = false)
-    private CoOwnerUserCommunityTable promotedBy;
+    private UserTable promotedBy;
 
     @Column(name = "currently_active_mod", nullable = false)
     private Boolean currentlyActiveMod;

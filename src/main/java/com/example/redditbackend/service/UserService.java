@@ -1,8 +1,6 @@
 package com.example.redditbackend.service;
 
-import com.example.redditbackend.entity.CommunityTable;
-import com.example.redditbackend.entity.NormalUserCommunityTable;
-import com.example.redditbackend.entity.UserTable;
+import com.example.redditbackend.entity.*;
 import com.example.redditbackend.repository.*;
 import com.example.redditbackend.request.CommunityRequest;
 import com.example.redditbackend.request.LoginRequest;
@@ -178,6 +176,35 @@ public class UserService {
         }catch (Exception e){
             log.error(e.toString());
             throw new Exception("Unable to join community due to: "+e.toString());
+        }
+    }
+
+    public ModUserCommunityTable promoteToMod(Integer userId, Integer communityId, Integer promoterId) throws Exception{
+        try{
+            Optional<UserTable> checkUser = userTableRepository.findById(userId);
+            if(!checkUser.isPresent())
+                throw new Exception("User not found");
+            Optional<CommunityTable> checkCommunity = communityTableRepository.findById(communityId);
+            if(!checkCommunity.isPresent())
+                throw new Exception("Community not found");
+            Optional<UserTable> checkPromoter = userTableRepository.findById(promoterId);
+            if(!checkPromoter.isPresent())
+                throw new Exception("Promoter not present");
+            CommunityTable checkOwner = communityTableRepository.findByCurrentOwnerAndCommunityId(checkPromoter.get(), checkCommunity.get());
+            CoOwnerUserCommunityTable checkCoOwner = coOwnerUserCommunityTableRepository.findByUserIdAndCommunityId(checkPromoter.get(), checkCommunity.get());
+            if(checkOwner == null && checkCoOwner == null)
+                throw new Exception("Unable to find userid either as a owner or a co-owner of the community provided");
+            ModUserCommunityTable modUserCommunityTable = new ModUserCommunityTable();
+            modUserCommunityTable.setCommunityTable(checkCommunity.get());
+            modUserCommunityTable.setUserId(checkUser.get());
+            modUserCommunityTable.setBecomeModDate(new Date());
+            modUserCommunityTable.setCurrentlyActiveMod(true);
+            modUserCommunityTable.setPromotedBy(checkPromoter.get());
+            ModUserCommunityTable savedMod = modUserCommunityTableRepository.save(modUserCommunityTable);
+            return savedMod;
+        }catch(Exception e){
+            log.error(e);
+            throw new Exception("Unable to promote to mod because: "+e.toString());
         }
     }
 }

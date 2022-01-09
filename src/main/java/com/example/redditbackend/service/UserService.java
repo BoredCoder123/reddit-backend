@@ -273,7 +273,53 @@ public class UserService {
             return demotedFromModResponse;
         }catch(Exception e){
             log.error(e);
-            throw new Exception("Unable to demote from mod because: "+e.toString());
+            throw new Exception("Unable to demote from mod because: "+ e);
+        }
+    }
+
+    public PromoterToCoOwnerResponse promoteToCoOwner(Integer userId, Integer communityId, Integer promoterId) throws Exception{
+        try{
+            Optional<UserTable> checkUser = userTableRepository.findById(userId);
+            if(!checkUser.isPresent())
+                throw new Exception("User not present");
+            UserTable user = checkUser.get();
+            Optional<CommunityTable> checkCommunity = communityTableRepository.findById(communityId);
+            if(!checkCommunity.isPresent())
+                throw new Exception("Community not present");
+            CommunityTable community = checkCommunity.get();
+            Optional<UserTable> checkPromoter = userTableRepository.findById(promoterId);
+            if(!checkPromoter.isPresent())
+                throw new Exception("Promoter not present");
+            UserTable promoter = checkPromoter.get();
+            CommunityTable checkCommunityAndOwner = communityTableRepository.findByCurrentOwnerAndCommunityId(promoter, community.getCommunityId());
+            if(checkCommunityAndOwner == null)
+                throw new Exception("Unable to find owner as the promoter");
+            NormalUserCommunityTable checkUserInCommunity = normalUserCommunityTableRepository.findByUserIdAndCommunityId(user, community);
+            if(checkUserInCommunity==null)
+                throw new Exception("Unable to find user in the community");
+            CoOwnerUserCommunityTable checkExistingCoOwner = coOwnerUserCommunityTableRepository.findByUserIdAndCommunityId(user, community);
+            CoOwnerUserCommunityTable savedCoOwner;
+            if(checkExistingCoOwner==null){
+                CoOwnerUserCommunityTable newCoOwner = new CoOwnerUserCommunityTable();
+                newCoOwner.setBecomeCoOwnerDate(new Date());
+                newCoOwner.setUserId(user);
+                newCoOwner.setCommunityId(community);
+                newCoOwner.setCurrentlyActive(true);
+                savedCoOwner = coOwnerUserCommunityTableRepository.save(newCoOwner);
+            }else if(!checkExistingCoOwner.getCurrentlyActive()){
+                checkExistingCoOwner.setCurrentlyActive(true);
+                checkExistingCoOwner.setBecomeCoOwnerDate(new Date());
+                savedCoOwner = coOwnerUserCommunityTableRepository.save(checkExistingCoOwner);
+            }else{
+                throw new Exception("Co owner already exists in the database");
+            }
+            PromoterToCoOwnerResponse response = new PromoterToCoOwnerResponse(savedCoOwner.getCoOwnerUserCommunityId(), savedCoOwner.getUserId().getUserId(),
+                    savedCoOwner.getCommunityId().getCommunityId(), savedCoOwner.getBecomeCoOwnerDate(), savedCoOwner.getCurrentlyActive(), savedCoOwner.getStatusChangeDate());
+
+            return response;
+        }catch (Exception e){
+            log.error(e);
+            throw new Exception("Unable to promote to co owner because "+e);
         }
     }
 }

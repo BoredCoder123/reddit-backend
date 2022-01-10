@@ -494,4 +494,41 @@ public class UserService {
             throw new Exception("Unable to unban user because: "+e);
         }
     }
+
+    public LeaveCommunityResponse leaveCommunity(Integer userId, Integer communityId) throws Exception{
+        try{
+            LeaveCommunityResponse response = new LeaveCommunityResponse();
+            Optional<UserTable> checkUser = userTableRepository.findById(userId);
+            if(!checkUser.isPresent())
+                throw new Exception("Unable to find user");
+            UserTable user = checkUser.get();
+            Optional<CommunityTable> checkCommunity = communityTableRepository.findById(communityId);
+            if(!checkCommunity.isPresent())
+                throw new Exception("Unable to find community");
+            CommunityTable community = checkCommunity.get();
+            NormalUserCommunityTable checkNormalUser = normalUserCommunityTableRepository.findByUserIdAndCommunityId(user, community);
+            if(checkNormalUser== null)
+                throw new Exception("Cannot leave the community as user is not a part of it");
+            if(checkNormalUser.getIsUserBanned())
+                throw new Exception("User is banned");
+            CoOwnerUserCommunityTable coOwner = coOwnerUserCommunityTableRepository.findByUserIdAndCommunityId(user, community);
+            if(coOwner!=null){
+                response.setCoOwnerIdDeleted(coOwner.getCoOwnerUserCommunityId());
+                coOwnerUserCommunityTableRepository.delete(coOwner);
+            }
+            ModUserCommunityTable mod = modUserCommunityTableRepository.findByCommunityTableAndUserId(community, user);
+            if(mod != null){
+                response.setModUserIdDeleted(mod.getModUserId());
+                modUserCommunityTableRepository.delete(mod);
+            }
+            response.setCommunityId(checkNormalUser.getCommunityId().getCommunityId());
+            response.setNormalUserIdDeleted(checkNormalUser.getNormalUserCommunityId());
+            response.setUserId(checkNormalUser.getUserId().getUserId());
+            normalUserCommunityTableRepository.delete(checkNormalUser);
+            return response;
+        }catch (Exception e){
+            log.error(e);
+            throw new Exception("Unable to leave community because: "+e);
+        }
+    }
 }

@@ -163,5 +163,15 @@ public class UserController {
         }
     }
 
-    //Write controller for unban, leaving community, list of mods, list of co owners, modification of commmunity, fetch communities by normal user
+    @PostMapping("leave-community/{userId}/{communityId}")
+    public ResponseEntity leaveCommunity(@PathVariable Integer userId, @PathVariable Integer communityId){
+        try{
+            return new ResponseEntity(userService.leaveCommunity(userId, communityId), HttpStatus.OK);
+        }catch (Exception e){
+            log.error(e);
+            return new ResponseEntity("Unable to leave community", HttpStatus.CONFLICT);
+        }
+    }
+
+    //Write controller for leaving community, list of mods, list of co owners, modification of commmunity, fetch communities by normal user
 }

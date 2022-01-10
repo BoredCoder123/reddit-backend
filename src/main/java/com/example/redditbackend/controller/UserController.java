@@ -2,6 +2,7 @@ package com.example.redditbackend.controller;
 
 import com.example.redditbackend.entity.CommunityTable;
 import com.example.redditbackend.entity.NormalUserCommunityTable;
+import com.example.redditbackend.request.BanRequest;
 import com.example.redditbackend.request.CommunityRequest;
 import com.example.redditbackend.request.LoginRequest;
 import com.example.redditbackend.request.RegisterRequest;
@@ -134,7 +135,6 @@ public class UserController {
 
     @PostMapping("/demote-from-coowner/{userId}/{communityId}/{promoterId}/{toMod}")
     public ResponseEntity demoteFromCoOwner(@PathVariable Integer userId, @PathVariable Integer communityId, @PathVariable Integer promoterId, @PathVariable String toMod) {
-        log.error(toMod);
         try{
             return new ResponseEntity(userService.demoteFromCoOwner(userId, communityId, promoterId, toMod), HttpStatus.OK);
         }catch (Exception e){
@@ -142,4 +142,16 @@ public class UserController {
             return new ResponseEntity("Unable to demote from co owner", HttpStatus.CONFLICT);
         }
     }
+
+    @PostMapping("/ban")
+    public ResponseEntity banUser(@RequestBody BanRequest banRequest){
+        try{
+            return new ResponseEntity(userService.banUser(banRequest), HttpStatus.OK);
+        }catch (Exception e){
+            log.error(e);
+            return new ResponseEntity("Unable to ban person", HttpStatus.CONFLICT);
+        }
+    }
+
+    //Write controller for unban, leaving community, list of mods, list of co owners, modification of commmunity, fetch communities by normal user
 }

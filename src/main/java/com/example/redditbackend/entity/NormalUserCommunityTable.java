@@ -33,4 +33,14 @@ public class NormalUserCommunityTable {
 
     @Column(name = "is_user_banned", nullable = false)
     private Boolean isUserBanned;
+
+    @Column(name = "ban_reason", nullable = true, columnDefinition = "text")
+    private String banReason;
+
+    @Column(name = "date_banned", nullable = true)
+    private Date dateBanned;
+
+    @ManyToOne
+    @JoinColumn(name = "banned_by", nullable = true)
+    private UserTable bannedBy;
 }

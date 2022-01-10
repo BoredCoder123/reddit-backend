@@ -2,6 +2,7 @@ package com.example.redditbackend.service;
 
 import com.example.redditbackend.entity.*;
 import com.example.redditbackend.repository.*;
+import com.example.redditbackend.request.BanRequest;
 import com.example.redditbackend.request.CommunityRequest;
 import com.example.redditbackend.request.LoginRequest;
 import com.example.redditbackend.request.RegisterRequest;
@@ -393,6 +394,65 @@ public class UserService {
         }catch (Exception e){
             log.error(e);
             throw new Exception("Unable to demote from co owner because "+e);
+        }
+    }
+
+    public BanPersonResponse banUser(BanRequest banRequest) throws Exception{
+        try{
+            if(banRequest.getUserToBeBanned().equals(banRequest.getPersonBanning()))
+                throw new Exception("Cannot ban your self i.e. the owner of the community");
+            Optional<UserTable> checkUserToBeBanned = userTableRepository.findById(banRequest.getUserToBeBanned());
+            if(!checkUserToBeBanned.isPresent())
+                throw new Exception("Unable to find user");
+            UserTable userToBeBanned = checkUserToBeBanned.get();
+            Optional<CommunityTable> checkCommunityId = communityTableRepository.findById(banRequest.getCommunityFromWhichToBeBanned());
+            if(!checkCommunityId.isPresent())
+                throw new Exception("Community not present");
+            CommunityTable community = checkCommunityId.get();
+            Optional<UserTable> checkPersonBanning = userTableRepository.findById(banRequest.getPersonBanning());
+            if(!checkPersonBanning.isPresent())
+                throw new Exception("Person banning not present");
+            UserTable personBanning = checkPersonBanning.get();
+            NormalUserCommunityTable checkNormalUser = normalUserCommunityTableRepository.findByUserIdAndCommunityId(userToBeBanned, community);
+            if(checkNormalUser == null)
+                throw new Exception("Unable to find the person in the community");
+
+            ModUserCommunityTable checkMod = modUserCommunityTableRepository.findByCommunityTableAndUserId(community, personBanning);
+            CoOwnerUserCommunityTable checkCoOwner = coOwnerUserCommunityTableRepository.findByUserIdAndCommunityId(personBanning, community);
+            CommunityTable checkOwner = communityTableRepository.findByCurrentOwnerAndCommunityId(personBanning, community.getCommunityId());
+
+            if(checkMod == null && checkCoOwner == null && checkOwner == null)
+                throw new Exception("Not enough permissions to ban");
+
+            CoOwnerUserCommunityTable banAsCoOwner = coOwnerUserCommunityTableRepository.findByUserIdAndCommunityId(userToBeBanned, community);
+            if(banAsCoOwner != null){
+                banAsCoOwner.setCurrentlyActive(false);
+                banAsCoOwner.setStatusChangeDate(new Date());
+                coOwnerUserCommunityTableRepository.save(banAsCoOwner);
+            }
+            ModUserCommunityTable banAsMod = modUserCommunityTableRepository.findByCommunityTableAndUserId(community, userToBeBanned);
+            if(banAsMod != null){
+                banAsMod.setCurrentlyActiveMod(false);
+                banAsMod.setStatusChange(new Date());
+                banAsMod.setPromotedBy(personBanning);
+                modUserCommunityTableRepository.save(banAsMod);
+            }
+
+            checkNormalUser.setIsUserBanned(true);
+            checkNormalUser.setBannedBy(personBanning);
+            checkNormalUser.setBanReason(banRequest.getBanReason());
+            checkNormalUser.setDateBanned(new Date());
+            NormalUserCommunityTable savedBannedUser = normalUserCommunityTableRepository.save(checkNormalUser);
+
+            BanPersonResponse response = new BanPersonResponse(savedBannedUser.getNormalUserCommunityId(), savedBannedUser.getUserId().getUserId()
+                    , savedBannedUser.getCommunityId().getCommunityId(), savedBannedUser.getJoinDate(), savedBannedUser.getIsUserBanned(), savedBannedUser.getBanReason(),
+                    savedBannedUser.getDateBanned());
+
+            return response;
+
+        }catch (Exception e){
+            log.error(e);
+            throw new Exception("Unable to ban person because: "+e);
         }
     }
 }

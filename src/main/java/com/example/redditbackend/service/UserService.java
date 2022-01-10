@@ -2,10 +2,7 @@ package com.example.redditbackend.service;
 
 import com.example.redditbackend.entity.*;
 import com.example.redditbackend.repository.*;
-import com.example.redditbackend.request.BanRequest;
-import com.example.redditbackend.request.CommunityRequest;
-import com.example.redditbackend.request.LoginRequest;
-import com.example.redditbackend.request.RegisterRequest;
+import com.example.redditbackend.request.*;
 import com.example.redditbackend.response.*;
 import com.example.redditbackend.utility.SHA256;
 import lombok.NoArgsConstructor;
@@ -599,6 +596,28 @@ public class UserService {
         }catch (Exception e){
             log.error(e);
             throw new Exception("Unable to fetch community details because: "+e);
+        }
+    }
+
+    public ModifyCommunityResponse modifyCommunityRequest(ModifyCommunityRequest modifyCommunityRequest) throws Exception {
+        try{
+            Optional<CommunityTable> checkCommunity = communityTableRepository.findById(modifyCommunityRequest.getCommunityId());
+            if(!checkCommunity.isPresent())
+                throw new Exception("Unable to fetch community");
+            CommunityTable community = checkCommunity.get();
+
+            community.setCommunityName(modifyCommunityRequest.getName());
+            community.setRules(modifyCommunityRequest.getRules());
+            community.setCommunityDescription(modifyCommunityRequest.getCommunityDescription());
+
+            CommunityTable savedCommunity = communityTableRepository.save(community);
+
+            ModifyCommunityResponse response = new ModifyCommunityResponse(savedCommunity.getCommunityId(), savedCommunity.getCommunityName(), savedCommunity.getCommunityDescription()
+            , savedCommunity.getCreationDate(), savedCommunity.getRules(), savedCommunity.getCreatorId(), savedCommunity.getCurrentOwner());
+            return response;
+        }catch (Exception e){
+            log.error(e);
+            throw new Exception("Unable to modify community because: "+e);
         }
     }
 }

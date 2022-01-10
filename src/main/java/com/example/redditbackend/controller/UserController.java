@@ -2,10 +2,7 @@ package com.example.redditbackend.controller;
 
 import com.example.redditbackend.entity.CommunityTable;
 import com.example.redditbackend.entity.NormalUserCommunityTable;
-import com.example.redditbackend.request.BanRequest;
-import com.example.redditbackend.request.CommunityRequest;
-import com.example.redditbackend.request.LoginRequest;
-import com.example.redditbackend.request.RegisterRequest;
+import com.example.redditbackend.request.*;
 import com.example.redditbackend.response.HeartbeatResponse;
 import com.example.redditbackend.response.LoginResponse;
 import com.example.redditbackend.response.RegisterResponse;
@@ -183,5 +180,14 @@ public class UserController {
         }
     }
 
-    //Write controller for list of mods, list of co owners, modification of commmunity, fetch communities by normal user,
+    @PostMapping("/modify-community")
+    public ResponseEntity modifyCommunity(@RequestBody ModifyCommunityRequest modifyCommunityRequest){
+        try{
+            return new ResponseEntity(userService.modifyCommunityRequest(modifyCommunityRequest), HttpStatus.OK);
+        }catch (Exception e){
+            log.error(e);
+            return new ResponseEntity("Unable to modify details", HttpStatus.CONFLICT);
+        }
+    }
+    //Write controller for modification of commmunity, fetch communities by normal user, transfer ownership of community
 }

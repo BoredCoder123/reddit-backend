@@ -26,6 +26,9 @@ public class CommunityTable {
     @Column(name = "community_name", unique = true, nullable = false)
     private String communityName;
 
+    @Column(name = "community_description", nullable = false, columnDefinition = "text")
+    private String communityDescription;
+
     @Column(name = "creation_date", nullable = false)
     private Date creationDate;
 

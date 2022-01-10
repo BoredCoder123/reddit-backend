@@ -15,4 +15,5 @@ public class CommunityRequest {
     private String communityName;
     private List<String> rules;
     private Integer creatorId;
+    private String communityDescription;
 }

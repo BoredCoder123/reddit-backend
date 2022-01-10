@@ -19,4 +19,5 @@ public class CommunityResponse {
     private List<String> rules;
     private Integer creatorId;
     private Integer ownerId;
+    private String communityDescription;
 }

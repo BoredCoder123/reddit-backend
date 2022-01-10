@@ -86,6 +86,7 @@ public class UserService {
             communityTable.setCreationDate(new Date());
             communityTable.setRules(communityRequest.getRules());
             communityTable.setCreatorId(checkUser.get());
+            communityTable.setCommunityDescription(communityRequest.getCommunityDescription());
             log.error(checkUser.get().getUserId());
             CommunityTable savedCommunity=communityTableRepository.save(communityTable);
 
@@ -97,7 +98,8 @@ public class UserService {
             NormalUserCommunityTable savedUser = normalUserCommunityTableRepository.save(normalUserCommunityTable);
 
             CreateCommunityResponse response = new CreateCommunityResponse(savedCommunity.getCommunityId(), savedCommunity.getCommunityName(), savedCommunity.getCreationDate(),
-                    savedCommunity.getCreatorId().getUserId(), savedCommunity.getCurrentOwner().getUserId(), savedUser.getUserId().getUserId(), savedCommunity.getRules());
+                    savedCommunity.getCreatorId().getUserId(), savedCommunity.getCurrentOwner().getUserId(), savedUser.getUserId().getUserId(),
+                    savedCommunity.getCommunityDescription(), savedCommunity.getRules());
 
             return response;
         }catch (Exception e){
@@ -112,7 +114,7 @@ public class UserService {
             List<CommunityResponse> result = new ArrayList<>();
             for (CommunityTable c:communityTableList) {
                 CommunityResponse cr = new CommunityResponse(c.getCommunityId(), c.getCommunityName(),
-                        c.getCreationDate(), c.getRules(), c.getCreatorId().getUserId(), c.getCurrentOwner().getUserId());
+                        c.getCreationDate(), c.getRules(), c.getCreatorId().getUserId(), c.getCurrentOwner().getUserId(), c.getCommunityDescription());
                 result.add(cr);
             }
             return result;
@@ -131,7 +133,7 @@ public class UserService {
             List<CommunityTable> communityTableList = communityTableRepository.findByCurrentOwner(userTable);
             for (CommunityTable c:communityTableList) {
                 CommunityResponse cr = new CommunityResponse(c.getCommunityId(), c.getCommunityName(),
-                        c.getCreationDate(), c.getRules(), c.getCreatorId().getUserId(), c.getCurrentOwner().getUserId());
+                        c.getCreationDate(), c.getRules(), c.getCreatorId().getUserId(), c.getCurrentOwner().getUserId(), c.getCommunityDescription());
                 result.add(cr);
             }
             return result;
@@ -150,7 +152,7 @@ public class UserService {
             List<CommunityTable> communityTableList = communityTableRepository.findByCreatorId(userTable);
             for (CommunityTable c:communityTableList) {
                 CommunityResponse cr = new CommunityResponse(c.getCommunityId(), c.getCommunityName(),
-                        c.getCreationDate(), c.getRules(), c.getCreatorId().getUserId(), c.getCurrentOwner().getUserId());
+                        c.getCreationDate(), c.getRules(), c.getCreatorId().getUserId(), c.getCurrentOwner().getUserId(), c.getCommunityDescription());
                 result.add(cr);
             }
             return result;

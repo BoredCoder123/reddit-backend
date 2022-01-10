@@ -173,5 +173,5 @@ public class UserController {
         }
     }
 
-    //Write controller for leaving community, list of mods, list of co owners, modification of commmunity, fetch communities by normal user
+    //Write controller for list of mods, list of co owners, modification of commmunity, fetch communities by normal user,
 }

@@ -8,6 +8,7 @@ import com.example.redditbackend.request.LoginRequest;
 import com.example.redditbackend.request.RegisterRequest;
 import com.example.redditbackend.response.*;
 import com.example.redditbackend.utility.SHA256;
+import lombok.NoArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -531,6 +532,73 @@ public class UserService {
         }catch (Exception e){
             log.error(e);
             throw new Exception("Unable to leave community because: "+e);
+        }
+    }
+
+    public GetCommunityDetailsResponse getCommunityDetails(Integer userId, Integer communityId) throws Exception{
+        try{
+            GetCommunityDetailsResponse response = new GetCommunityDetailsResponse();
+            Optional<UserTable> checkUser = userTableRepository.findById(userId);
+            if(!checkUser.isPresent())
+                throw new Exception("Unable to find the user");
+            UserTable user = checkUser.get();
+            Optional<CommunityTable> checkCommunity = communityTableRepository.findById(communityId);
+            if(!checkCommunity.isPresent())
+                throw new Exception("Unable to find community");
+            CommunityTable community = checkCommunity.get();
+
+            CommunityTable checkOwner = communityTableRepository.findByCurrentOwnerAndCommunityId(user, community.getCommunityId());
+            if(checkOwner == null)
+                throw new Exception("User doesn't have enough permission for this action");
+
+            response.setCommunityId(checkOwner.getCommunityId());
+            response.setCommunityName(checkOwner.getCommunityName());
+            response.setCommunityDescription(checkOwner.getCommunityDescription());
+            response.setCreationDate(checkOwner.getCreationDate());
+            response.setRules(checkOwner.getRules());
+            response.setCreatorId(checkOwner.getCreatorId().getUserId());
+            response.setCreatorName(checkOwner.getCreatorId().getUsername());
+            response.setCurrentOwnerId(checkOwner.getCurrentOwner().getUserId());
+            response.setCurrentOwnerName(checkOwner.getCurrentOwner().getUsername());
+
+            List<NormalUserDescriptionForDetails> normalUsersDetails = new ArrayList<>();
+            List<NormalUserCommunityTable> listOfNormalUsers = normalUserCommunityTableRepository.findAll();
+            for(NormalUserCommunityTable n : listOfNormalUsers){
+                NormalUserDescriptionForDetails temp = new NormalUserDescriptionForDetails();
+                temp.setNormalUserId(n.getUserId().getUserId());
+                temp.setNormalUsername(n.getUserId().getUsername());
+                temp.setIsUserBanned(n.getIsUserBanned());
+                temp.setBanReason(n.getBanReason());
+                normalUsersDetails.add(temp);
+            }
+            response.setListOfUsers(normalUsersDetails);
+
+            List<ModUserDescriptionForDetails> modUsersDetails = new ArrayList<>();
+            List<ModUserCommunityTable> listOfModUsers = modUserCommunityTableRepository.findAll();
+            for(ModUserCommunityTable n : listOfModUsers){
+                ModUserDescriptionForDetails temp = new ModUserDescriptionForDetails();
+                temp.setModId(n.getUserId().getUserId());
+                temp.setModUsername(n.getUserId().getUsername());
+                temp.setIsCurrentlyActive(n.getCurrentlyActiveMod());
+                modUsersDetails.add(temp);
+            }
+            response.setListOfMods(modUsersDetails);
+
+            List<CoOwnerDescriptionForDetails> coOwnerDetails = new ArrayList<>();
+            List<CoOwnerUserCommunityTable> listOfCoOwnerUsers = coOwnerUserCommunityTableRepository.findAll();
+            for(CoOwnerUserCommunityTable n : listOfCoOwnerUsers){
+                CoOwnerDescriptionForDetails temp = new CoOwnerDescriptionForDetails();
+                temp.setCoOwnerId(n.getUserId().getUserId());
+                temp.setIsCurrentlyActive(n.getCurrentlyActive());
+                temp.setCoOwnerUsername(n.getUserId().getUsername());
+                coOwnerDetails.add(temp);
+            }
+            response.setListOfCoOwners(coOwnerDetails);
+
+            return response;
+        }catch (Exception e){
+            log.error(e);
+            throw new Exception("Unable to fetch community details because: "+e);
         }
     }
 }

@@ -163,13 +163,23 @@ public class UserController {
         }
     }
 
-    @PostMapping("leave-community/{userId}/{communityId}")
+    @PostMapping("/leave-community/{userId}/{communityId}")
     public ResponseEntity leaveCommunity(@PathVariable Integer userId, @PathVariable Integer communityId){
         try{
             return new ResponseEntity(userService.leaveCommunity(userId, communityId), HttpStatus.OK);
         }catch (Exception e){
             log.error(e);
             return new ResponseEntity("Unable to leave community", HttpStatus.CONFLICT);
+        }
+    }
+
+    @GetMapping("/community/{userId}/{communityId}")
+    public ResponseEntity getCommunityDetails(@PathVariable Integer userId, @PathVariable Integer communityId){
+        try{
+            return new ResponseEntity(userService.getCommunityDetails(userId, communityId), HttpStatus.OK);
+        }catch (Exception e){
+            log.error(e);
+            return new ResponseEntity("Unable to fetch details", HttpStatus.OK);
         }
     }
 

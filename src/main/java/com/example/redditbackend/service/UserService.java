@@ -13,10 +13,7 @@ import org.springframework.stereotype.Service;
 import sun.reflect.annotation.ExceptionProxy;
 
 import javax.transaction.Transactional;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 @Service
 @Log4j2
@@ -98,8 +95,8 @@ public class UserService {
             normalUserCommunityTable.setJoinDate(new Date());
             NormalUserCommunityTable savedUser = normalUserCommunityTableRepository.save(normalUserCommunityTable);
 
-            CreateCommunityResponse response = new CreateCommunityResponse(savedCommunity.getCommunityId(), savedCommunity.getCommunityName(),
-                    savedCommunity.getCreationDate(), savedCommunity.getCreatorId().getUserId(), savedCommunity.getCurrentOwner().getUserId(), savedUser.getUserId().getUserId());
+            CreateCommunityResponse response = new CreateCommunityResponse(savedCommunity.getCommunityId(), savedCommunity.getCommunityName(), savedCommunity.getCreationDate(),
+                    savedCommunity.getCreatorId().getUserId(), savedCommunity.getCurrentOwner().getUserId(), savedUser.getUserId().getUserId(), savedCommunity.getRules());
 
             return response;
         }catch (Exception e){
@@ -313,6 +310,15 @@ public class UserService {
             }else{
                 throw new Exception("Co owner already exists in the database");
             }
+
+            ModUserCommunityTable checkMod = modUserCommunityTableRepository.findByCommunityTableAndUserId(community, user);
+            if(checkMod!=null){
+                checkMod.setCurrentlyActiveMod(false);
+                checkMod.setStatusChange(new Date());
+                checkMod.setPromotedBy(promoter);
+                modUserCommunityTableRepository.save(checkMod);
+            }
+
             PromoterToCoOwnerResponse response = new PromoterToCoOwnerResponse(savedCoOwner.getCoOwnerUserCommunityId(), savedCoOwner.getUserId().getUserId(),
                     savedCoOwner.getCommunityId().getCommunityId(), savedCoOwner.getBecomeCoOwnerDate(), savedCoOwner.getCurrentlyActive(), savedCoOwner.getStatusChangeDate());
 
@@ -320,6 +326,73 @@ public class UserService {
         }catch (Exception e){
             log.error(e);
             throw new Exception("Unable to promote to co owner because "+e);
+        }
+    }
+
+    public DemoteFromCoOwnerResponse demoteFromCoOwner(Integer userId, Integer communityId, Integer demoterId, String toMod) throws Exception{
+        try{
+            if(!toMod.toLowerCase(Locale.ROOT).equals("y") && !toMod.toLowerCase(Locale.ROOT).equals("n"))
+                throw new Exception("ToMod has an incorrect value");
+            Optional<UserTable> checkUser = userTableRepository.findById(userId);
+            if(!checkUser.isPresent())
+                throw new Exception("User not present");
+            UserTable user = checkUser.get();
+            Optional<CommunityTable> checkCommunity = communityTableRepository.findById(communityId);
+            if(!checkCommunity.isPresent())
+                throw new Exception("Community not present");
+            CommunityTable community = checkCommunity.get();
+            Optional<UserTable> checkDemoterId = userTableRepository.findById(demoterId);
+            if(!checkDemoterId.isPresent())
+                throw new Exception("Promoter not present");
+            UserTable demoter = checkDemoterId.get();
+
+            CommunityTable checkOwner = communityTableRepository.findByCurrentOwnerAndCommunityId(demoter, community.getCommunityId());
+            if(checkOwner == null)
+                throw new Exception("Demoter not the owner of the community hence cannot demote");
+            CoOwnerUserCommunityTable checkUserId = coOwnerUserCommunityTableRepository.findByUserIdAndCommunityId(user, community);
+            if(checkUserId == null)
+                throw new Exception("User not found as the co owner of the community");
+
+            checkUserId.setCurrentlyActive(false);
+            checkUserId.setStatusChangeDate(new Date());
+            CoOwnerUserCommunityTable savedUser = coOwnerUserCommunityTableRepository.save(checkUserId);
+
+            DemoteFromCoOwnerResponse response = new DemoteFromCoOwnerResponse();
+            response.setCoOwnerUserCommunityId(savedUser.getCoOwnerUserCommunityId());
+            response.setUserId(savedUser.getUserId().getUserId());
+            response.setCommunityId(savedUser.getCommunityId().getCommunityId());
+            response.setBecomeCoOwnerDate(savedUser.getBecomeCoOwnerDate());
+            response.setCurrentlyActive(savedUser.getCurrentlyActive());
+            response.setStatusChangeDate(savedUser.getStatusChangeDate());
+
+            if(toMod.toLowerCase(Locale.ROOT).equals("y")){
+                ModUserCommunityTable checkMod = modUserCommunityTableRepository.findByCommunityTableAndUserId(community, user);
+                if(checkMod == null){
+                    ModUserCommunityTable modUserCommunityTable = new ModUserCommunityTable();
+                    modUserCommunityTable.setCommunityTable(community);
+                    modUserCommunityTable.setUserId(user);
+                    modUserCommunityTable.setBecomeModDate(new Date());
+                    modUserCommunityTable.setPromotedBy(demoter);
+                    modUserCommunityTable.setStatusChange(new Date());
+                    modUserCommunityTable.setCurrentlyActiveMod(true);
+                    modUserCommunityTableRepository.save(modUserCommunityTable);
+                    response.setIsCurrentlyMod(true);
+                }else{
+                    checkMod.setCurrentlyActiveMod(true);
+                    checkMod.setBecomeModDate(new Date());
+                    checkMod.setStatusChange(new Date());
+                    checkMod.setPromotedBy(demoter);
+                    modUserCommunityTableRepository.save(checkMod);
+                    response.setIsCurrentlyMod(true);
+                }
+            }else{
+                response.setIsCurrentlyMod(false);
+            }
+
+            return response;
+        }catch (Exception e){
+            log.error(e);
+            throw new Exception("Unable to demote from co owner because "+e);
         }
     }
 }

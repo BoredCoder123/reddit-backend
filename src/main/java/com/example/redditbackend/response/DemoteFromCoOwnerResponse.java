@@ -6,18 +6,17 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.util.Date;
-import java.util.List;
 
 @Getter
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-public class CreateCommunityResponse {
+public class DemoteFromCoOwnerResponse {
+    private Integer coOwnerUserCommunityId;
+    private Integer userId;
     private Integer communityId;
-    private String communityName;
-    private Date creationDate;
-    private Integer creatorId;
-    private Integer currentOwnerId;
-    private Integer normalUserId;
-    private List<String> rules;
+    private Date becomeCoOwnerDate;
+    private Boolean currentlyActive;
+    private Date statusChangeDate;
+    private Boolean isCurrentlyMod;
 }

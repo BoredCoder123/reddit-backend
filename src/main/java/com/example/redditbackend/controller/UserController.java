@@ -131,4 +131,15 @@ public class UserController {
             return new ResponseEntity("Unable to promote to co owner", HttpStatus.CONFLICT);
         }
     }
+
+    @PostMapping("/demote-from-coowner/{userId}/{communityId}/{promoterId}/{toMod}")
+    public ResponseEntity demoteFromCoOwner(@PathVariable Integer userId, @PathVariable Integer communityId, @PathVariable Integer promoterId, @PathVariable String toMod) {
+        log.error(toMod);
+        try{
+            return new ResponseEntity(userService.demoteFromCoOwner(userId, communityId, promoterId, toMod), HttpStatus.OK);
+        }catch (Exception e){
+            log.error(e);
+            return new ResponseEntity("Unable to demote from co owner", HttpStatus.CONFLICT);
+        }
+    }
 }

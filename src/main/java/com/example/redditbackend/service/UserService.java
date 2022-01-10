@@ -455,4 +455,43 @@ public class UserService {
             throw new Exception("Unable to ban person because: "+e);
         }
     }
+
+    public UnBanUserResponse unBanUser(Integer userId, Integer communityId, Integer unBanningId) throws Exception{
+        try{
+            Optional<UserTable> checkUserId = userTableRepository.findById(userId);
+            if(!checkUserId.isPresent())
+                throw new Exception("Unable to find userId");
+            UserTable user = checkUserId.get();
+            Optional<CommunityTable> checkCommunity = communityTableRepository.findById(communityId);
+            if(!checkCommunity.isPresent())
+                throw new Exception("Unable to find community");
+            CommunityTable community = checkCommunity.get();
+            Optional<UserTable> checkUnBanner = userTableRepository.findById(unBanningId);
+            if(!checkUnBanner.isPresent())
+                throw new Exception("Unable to find un banning id");
+            UserTable unBanner = checkUnBanner.get();
+            ModUserCommunityTable checkMod = modUserCommunityTableRepository.findByCommunityTableAndUserId(community, unBanner);
+            CoOwnerUserCommunityTable checkCoOwner = coOwnerUserCommunityTableRepository.findByUserIdAndCommunityId(unBanner, community);
+            CommunityTable checkOwner = communityTableRepository.findByCurrentOwnerAndCommunityId(unBanner, community.getCommunityId());
+            if(checkOwner == null && checkCoOwner == null && checkMod == null)
+                throw new Exception("Not enough permissions to ban a user");
+            NormalUserCommunityTable checkUser = normalUserCommunityTableRepository.findByUserIdAndCommunityId(user, community);
+            if(checkUser == null)
+                throw new Exception("Unable to find user in the community");
+            if(!checkUser.getIsUserBanned())
+                throw new Exception("No user to ban");
+            checkUser.setIsUserBanned(false);
+            checkUser.setDateBanned(new Date());
+            checkUser.setBannedBy(unBanner);
+            NormalUserCommunityTable savedUser = normalUserCommunityTableRepository.save(checkUser);
+
+            UnBanUserResponse response = new UnBanUserResponse(savedUser.getNormalUserCommunityId(), savedUser.getUserId().getUserId(), savedUser.getCommunityId().getCommunityId(),
+                    savedUser.getJoinDate(), savedUser.getIsUserBanned(), savedUser.getBanReason(), savedUser.getDateBanned(), savedUser.getBannedBy().getUserId());
+
+            return response;
+        }catch (Exception e){
+            log.error(e);
+            throw new Exception("Unable to unban user because: "+e);
+        }
+    }
 }

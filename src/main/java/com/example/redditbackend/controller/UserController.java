@@ -153,5 +153,15 @@ public class UserController {
         }
     }
 
+    @PostMapping("/unban/{userId}/{communityId}/{unBanningId}")
+    public ResponseEntity unBanUser(@PathVariable Integer userId, @PathVariable Integer communityId, @PathVariable Integer unBanningId){
+        try{
+            return new ResponseEntity(userService.unBanUser(userId, communityId, unBanningId), HttpStatus.OK);
+        }catch (Exception e){
+            log.error(e);
+            return new ResponseEntity("Unable to unban person", HttpStatus.CONFLICT);
+        }
+    }
+
     //Write controller for unban, leaving community, list of mods, list of co owners, modification of commmunity, fetch communities by normal user
 }

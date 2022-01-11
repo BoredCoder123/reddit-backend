@@ -15,26 +15,26 @@ import java.util.*;
 @Log4j2
 public class UserService {
     @Autowired
-    private UserTableRepository userTableRepository;
+    protected UserTableRepository userRepo;
 
     @Autowired
-    private CommunityTableRepository communityTableRepository;
+    protected CommunityTableRepository communityRepo;
 
     @Autowired
-    private CoOwnerUserCommunityTableRepository coOwnerUserCommunityTableRepository;
+    protected CoOwnerUserCommunityTableRepository coOwnerRepo;
 
     @Autowired
-    private ModUserCommunityTableRepository modUserCommunityTableRepository;
+    protected ModUserCommunityTableRepository modRepo;
 
     @Autowired
-    private NormalUserCommunityTableRepository normalUserCommunityTableRepository;
+    protected NormalUserCommunityTableRepository normalRepo;
 
     public RegisterResponse register(RegisterRequest registerRequest) throws Exception{
         try{
-            UserTable checkExistingUser = userTableRepository.findByEmail(registerRequest.getEmail());
+            UserTable checkExistingUser = userRepo.findByEmail(registerRequest.getEmail());
             if(checkExistingUser != null)
                 throw new Exception("User with email "+registerRequest.getEmail()+" already exists");
-            checkExistingUser = userTableRepository.findByUsername(registerRequest.getUsername());
+            checkExistingUser = userRepo.findByUsername(registerRequest.getUsername());
             if(checkExistingUser != null)
                 throw new Exception("User with username "+registerRequest.getUsername()+" already exists");
             UserTable newUser = new UserTable();
@@ -44,7 +44,7 @@ public class UserService {
             newUser.setHashedPassword(SHA256.toHexString(SHA256.getSHA(registerRequest.getPassword())));
             newUser.setJoinDate(new Date());
             newUser.setLastLoggedIn(new Date());
-            userTableRepository.save(newUser);
+            userRepo.save(newUser);
             return new RegisterResponse("User registered successfully");
         }catch (Exception e){
             log.error(e.toString());
@@ -54,7 +54,7 @@ public class UserService {
 
     public LoginResponse login(LoginRequest loginRequest) throws Exception{
         try{
-            UserTable checkUser = userTableRepository.findByUsername(loginRequest.getUsername());
+            UserTable checkUser = userRepo.findByUsername(loginRequest.getUsername());
             if(checkUser == null)
                 throw new Exception("Unable to find username");
             String hashedPassword = SHA256.toHexString(SHA256.getSHA(loginRequest.getPassword()));
@@ -69,10 +69,10 @@ public class UserService {
 
     public CreateCommunityResponse createCommunity(CommunityRequest communityRequest) throws Exception{
         try{
-            Optional<UserTable> checkUser = userTableRepository.findById(communityRequest.getCreatorId());
+            Optional<UserTable> checkUser = userRepo.findById(communityRequest.getCreatorId());
             if(!checkUser.isPresent())
                 throw new Exception("Unable to find creator id");
-            CommunityTable checkExistingCommunity = communityTableRepository.findByCommunityName(communityRequest.getCommunityName());
+            CommunityTable checkExistingCommunity = communityRepo.findByCommunityName(communityRequest.getCommunityName());
             if(checkExistingCommunity != null)
                 throw new Exception("Community name already exists");
             CommunityTable communityTable = new CommunityTable();
@@ -83,14 +83,14 @@ public class UserService {
             communityTable.setCreatorId(checkUser.get());
             communityTable.setCommunityDescription(communityRequest.getCommunityDescription());
             log.error(checkUser.get().getUserId());
-            CommunityTable savedCommunity=communityTableRepository.save(communityTable);
+            CommunityTable savedCommunity=communityRepo.save(communityTable);
 
             NormalUserCommunityTable normalUserCommunityTable = new NormalUserCommunityTable();
             normalUserCommunityTable.setCommunityId(savedCommunity);
             normalUserCommunityTable.setUserId(checkUser.get());
             normalUserCommunityTable.setIsUserBanned(false);
             normalUserCommunityTable.setJoinDate(new Date());
-            NormalUserCommunityTable savedUser = normalUserCommunityTableRepository.save(normalUserCommunityTable);
+            NormalUserCommunityTable savedUser = normalRepo.save(normalUserCommunityTable);
 
             CreateCommunityResponse response = new CreateCommunityResponse(savedCommunity.getCommunityId(), savedCommunity.getCommunityName(), savedCommunity.getCreationDate(),
                     savedCommunity.getCreatorId().getUserId(), savedCommunity.getCurrentOwner().getUserId(), savedUser.getUserId().getUserId(),
@@ -105,7 +105,7 @@ public class UserService {
 
     public List<CommunityResponse> getAllCommunities() throws Exception{
         try{
-            List<CommunityTable> communityTableList =  communityTableRepository.findAll();
+            List<CommunityTable> communityTableList =  communityRepo.findAll();
             List<CommunityResponse> result = new ArrayList<>();
             for (CommunityTable c:communityTableList) {
                 CommunityResponse cr = new CommunityResponse(c.getCommunityId(), c.getCommunityName(),
@@ -121,11 +121,11 @@ public class UserService {
 
     public List<CommunityResponse> getAllCommunities(String username) throws Exception{
         try{
-            UserTable userTable = userTableRepository.findByUsername(username);
+            UserTable userTable = userRepo.findByUsername(username);
             if(userTable == null)
                 throw new Exception("Unable to find username");
             List<CommunityResponse> result = new ArrayList<>();
-            List<CommunityTable> communityTableList = communityTableRepository.findByCurrentOwner(userTable);
+            List<CommunityTable> communityTableList = communityRepo.findByCurrentOwner(userTable);
             for (CommunityTable c:communityTableList) {
                 CommunityResponse cr = new CommunityResponse(c.getCommunityId(), c.getCommunityName(),
                         c.getCreationDate(), c.getRules(), c.getCreatorId().getUserId(), c.getCurrentOwner().getUserId(), c.getCommunityDescription());
@@ -140,11 +140,11 @@ public class UserService {
 
     public List<CommunityResponse> getAllCommunitiesByCreatorId(String username) throws Exception{
         try{
-            UserTable userTable = userTableRepository.findByUsername(username);
+            UserTable userTable = userRepo.findByUsername(username);
             if(userTable == null)
                 throw new Exception("Unable to find username");
             List<CommunityResponse> result = new ArrayList<>();
-            List<CommunityTable> communityTableList = communityTableRepository.findByCreatorId(userTable);
+            List<CommunityTable> communityTableList = communityRepo.findByCreatorId(userTable);
             for (CommunityTable c:communityTableList) {
                 CommunityResponse cr = new CommunityResponse(c.getCommunityId(), c.getCommunityName(),
                         c.getCreationDate(), c.getRules(), c.getCreatorId().getUserId(), c.getCurrentOwner().getUserId(), c.getCommunityDescription());
@@ -159,13 +159,13 @@ public class UserService {
 
     public JoinCommunityResponse joinCommunity(Integer userId, Integer communityId) throws Exception{
         try{
-            Optional<UserTable> checkUser = userTableRepository.findById(userId);
+            Optional<UserTable> checkUser = userRepo.findById(userId);
             if(!checkUser.isPresent())
                 throw new Exception("User not found");
-            Optional<CommunityTable> checkCommunity = communityTableRepository.findById(communityId);
+            Optional<CommunityTable> checkCommunity = communityRepo.findById(communityId);
             if(!checkCommunity.isPresent())
                 throw new Exception("Community not found");
-            NormalUserCommunityTable existingUser = normalUserCommunityTableRepository.findByUserIdAndCommunityId(checkUser.get(), checkCommunity.get());
+            NormalUserCommunityTable existingUser = normalRepo.findByUserIdAndCommunityId(checkUser.get(), checkCommunity.get());
             if(existingUser != null)
                 throw new Exception("User already exists in the community");
             NormalUserCommunityTable normalUserCommunityTable = new NormalUserCommunityTable();
@@ -173,7 +173,7 @@ public class UserService {
             normalUserCommunityTable.setCommunityId(checkCommunity.get());
             normalUserCommunityTable.setIsUserBanned(false);
             normalUserCommunityTable.setJoinDate(new Date());
-            NormalUserCommunityTable savedJoinUser = normalUserCommunityTableRepository.save(normalUserCommunityTable);
+            NormalUserCommunityTable savedJoinUser = normalRepo.save(normalUserCommunityTable);
 
             JoinCommunityResponse response = new JoinCommunityResponse(savedJoinUser.getNormalUserCommunityId(), savedJoinUser.getUserId().getUserId(),
                     savedJoinUser.getCommunityId().getCommunityId(), savedJoinUser.getJoinDate(), savedJoinUser.getIsUserBanned());
@@ -187,23 +187,23 @@ public class UserService {
 
     public PromoteToModResponse promoteToMod(Integer userId, Integer communityId, Integer promoterId) throws Exception{
         try{
-            Optional<UserTable> checkUser = userTableRepository.findById(userId);
+            Optional<UserTable> checkUser = userRepo.findById(userId);
             if(!checkUser.isPresent())
                 throw new Exception("User not found");
-            Optional<CommunityTable> checkCommunity = communityTableRepository.findById(communityId);
+            Optional<CommunityTable> checkCommunity = communityRepo.findById(communityId);
             if(!checkCommunity.isPresent())
                 throw new Exception("Community not found");
-            Optional<UserTable> checkPromoter = userTableRepository.findById(promoterId);
+            Optional<UserTable> checkPromoter = userRepo.findById(promoterId);
             if(!checkPromoter.isPresent())
                 throw new Exception("Promoter not present");
-            CommunityTable checkOwner = communityTableRepository.findByCurrentOwnerAndCommunityId(checkPromoter.get(), checkCommunity.get().getCommunityId());
-            CoOwnerUserCommunityTable checkCoOwner = coOwnerUserCommunityTableRepository.findByUserIdAndCommunityId(checkPromoter.get(), checkCommunity.get());
+            CommunityTable checkOwner = communityRepo.findByCurrentOwnerAndCommunityId(checkPromoter.get(), checkCommunity.get().getCommunityId());
+            CoOwnerUserCommunityTable checkCoOwner = coOwnerRepo.findByUserIdAndCommunityId(checkPromoter.get(), checkCommunity.get());
             if(checkOwner == null && checkCoOwner == null)
                 throw new Exception("Unable to find userid either as a owner or a co-owner of the community provided");
-            NormalUserCommunityTable checkUserInCommunity = normalUserCommunityTableRepository.findByUserIdAndCommunityId(checkUser.get(), checkCommunity.get());
+            NormalUserCommunityTable checkUserInCommunity = normalRepo.findByUserIdAndCommunityId(checkUser.get(), checkCommunity.get());
             if(checkUserInCommunity==null)
                 throw new Exception("Unable to find user in the community");
-            ModUserCommunityTable checkExistingMod = modUserCommunityTableRepository.findByCommunityTableAndUserId(checkCommunity.get(), checkUser.get());
+            ModUserCommunityTable checkExistingMod = modRepo.findByCommunityTableAndUserId(checkCommunity.get(), checkUser.get());
             if(checkExistingMod != null && checkExistingMod.getCurrentlyActiveMod())
                 throw new Exception("Mod already exists");
             ModUserCommunityTable savedMod;
@@ -214,7 +214,7 @@ public class UserService {
                 modUserCommunityTable.setBecomeModDate(new Date());
                 modUserCommunityTable.setCurrentlyActiveMod(true);
                 modUserCommunityTable.setPromotedBy(checkPromoter.get());
-                savedMod = modUserCommunityTableRepository.save(modUserCommunityTable);
+                savedMod = modRepo.save(modUserCommunityTable);
             }else if(!checkExistingMod.getCurrentlyActiveMod()){
                 if(checkOwner == null)
                     checkExistingMod.setPromotedBy(checkCoOwner.getUserId());
@@ -223,7 +223,7 @@ public class UserService {
                 checkExistingMod.setBecomeModDate(new Date());
                 checkExistingMod.setStatusChange(new Date());
                 checkExistingMod.setCurrentlyActiveMod(true);
-                savedMod = modUserCommunityTableRepository.save(checkExistingMod);
+                savedMod = modRepo.save(checkExistingMod);
             }else{
                 throw new Exception("Mod already exists");
             }
@@ -240,20 +240,20 @@ public class UserService {
 
     public PromoteToModResponse demoteFromMod(Integer userId, Integer communityId, Integer demoterId) throws Exception{
         try{
-            Optional<UserTable> checkUser = userTableRepository.findById(userId);
+            Optional<UserTable> checkUser = userRepo.findById(userId);
             if(!checkUser.isPresent())
                 throw new Exception("User not found");
-            Optional<CommunityTable> checkCommunity = communityTableRepository.findById(communityId);
+            Optional<CommunityTable> checkCommunity = communityRepo.findById(communityId);
             if(!checkCommunity.isPresent())
                 throw new Exception("Community not found");
-            Optional<UserTable> checkDemoter = userTableRepository.findById(demoterId);
+            Optional<UserTable> checkDemoter = userRepo.findById(demoterId);
             if(!checkDemoter.isPresent())
                 throw new Exception("Demoter not present");
-            CommunityTable checkOwner = communityTableRepository.findByCurrentOwnerAndCommunityId(checkDemoter.get(), checkCommunity.get().getCommunityId());
-            CoOwnerUserCommunityTable checkCoOwner = coOwnerUserCommunityTableRepository.findByUserIdAndCommunityId(checkDemoter.get(), checkCommunity.get());
+            CommunityTable checkOwner = communityRepo.findByCurrentOwnerAndCommunityId(checkDemoter.get(), checkCommunity.get().getCommunityId());
+            CoOwnerUserCommunityTable checkCoOwner = coOwnerRepo.findByUserIdAndCommunityId(checkDemoter.get(), checkCommunity.get());
             if(checkOwner == null && checkCoOwner == null)
                 throw new Exception("Unable to find userid either as a owner or a co-owner of the community provided");
-            ModUserCommunityTable checkMod = modUserCommunityTableRepository.findByCommunityTableAndUserId(checkCommunity.get(), checkUser.get());
+            ModUserCommunityTable checkMod = modRepo.findByCommunityTableAndUserId(checkCommunity.get(), checkUser.get());
             if(checkMod == null)
                 throw new Exception("Unable to find the mod in the community mentioned");
             if(!checkMod.getCurrentlyActiveMod())
@@ -261,7 +261,7 @@ public class UserService {
             checkMod.setCurrentlyActiveMod(false);
             checkMod.setStatusChange(new Date());
             checkMod.setPromotedBy(checkDemoter.get());
-            ModUserCommunityTable savedMod = modUserCommunityTableRepository.save(checkMod);
+            ModUserCommunityTable savedMod = modRepo.save(checkMod);
 
             PromoteToModResponse demotedFromModResponse = new PromoteToModResponse(savedMod.getModUserId(), savedMod.getUserId().getUserId(), savedMod.getCommunityTable()
                     .getCommunityId(), savedMod.getBecomeModDate(), savedMod.getPromotedBy().getUserId(), savedMod.getCurrentlyActiveMod(), savedMod.getStatusChange());
@@ -274,25 +274,25 @@ public class UserService {
 
     public PromoterToCoOwnerResponse promoteToCoOwner(Integer userId, Integer communityId, Integer promoterId) throws Exception{
         try{
-            Optional<UserTable> checkUser = userTableRepository.findById(userId);
+            Optional<UserTable> checkUser = userRepo.findById(userId);
             if(!checkUser.isPresent())
                 throw new Exception("User not present");
             UserTable user = checkUser.get();
-            Optional<CommunityTable> checkCommunity = communityTableRepository.findById(communityId);
+            Optional<CommunityTable> checkCommunity = communityRepo.findById(communityId);
             if(!checkCommunity.isPresent())
                 throw new Exception("Community not present");
             CommunityTable community = checkCommunity.get();
-            Optional<UserTable> checkPromoter = userTableRepository.findById(promoterId);
+            Optional<UserTable> checkPromoter = userRepo.findById(promoterId);
             if(!checkPromoter.isPresent())
                 throw new Exception("Promoter not present");
             UserTable promoter = checkPromoter.get();
-            CommunityTable checkCommunityAndOwner = communityTableRepository.findByCurrentOwnerAndCommunityId(promoter, community.getCommunityId());
+            CommunityTable checkCommunityAndOwner = communityRepo.findByCurrentOwnerAndCommunityId(promoter, community.getCommunityId());
             if(checkCommunityAndOwner == null)
                 throw new Exception("Unable to find owner as the promoter");
-            NormalUserCommunityTable checkUserInCommunity = normalUserCommunityTableRepository.findByUserIdAndCommunityId(user, community);
+            NormalUserCommunityTable checkUserInCommunity = normalRepo.findByUserIdAndCommunityId(user, community);
             if(checkUserInCommunity==null)
                 throw new Exception("Unable to find user in the community");
-            CoOwnerUserCommunityTable checkExistingCoOwner = coOwnerUserCommunityTableRepository.findByUserIdAndCommunityId(user, community);
+            CoOwnerUserCommunityTable checkExistingCoOwner = coOwnerRepo.findByUserIdAndCommunityId(user, community);
             CoOwnerUserCommunityTable savedCoOwner;
             if(checkExistingCoOwner==null){
                 CoOwnerUserCommunityTable newCoOwner = new CoOwnerUserCommunityTable();
@@ -300,21 +300,21 @@ public class UserService {
                 newCoOwner.setUserId(user);
                 newCoOwner.setCommunityId(community);
                 newCoOwner.setCurrentlyActive(true);
-                savedCoOwner = coOwnerUserCommunityTableRepository.save(newCoOwner);
+                savedCoOwner = coOwnerRepo.save(newCoOwner);
             }else if(!checkExistingCoOwner.getCurrentlyActive()){
                 checkExistingCoOwner.setCurrentlyActive(true);
                 checkExistingCoOwner.setBecomeCoOwnerDate(new Date());
-                savedCoOwner = coOwnerUserCommunityTableRepository.save(checkExistingCoOwner);
+                savedCoOwner = coOwnerRepo.save(checkExistingCoOwner);
             }else{
                 throw new Exception("Co owner already exists in the database");
             }
 
-            ModUserCommunityTable checkMod = modUserCommunityTableRepository.findByCommunityTableAndUserId(community, user);
+            ModUserCommunityTable checkMod = modRepo.findByCommunityTableAndUserId(community, user);
             if(checkMod!=null){
                 checkMod.setCurrentlyActiveMod(false);
                 checkMod.setStatusChange(new Date());
                 checkMod.setPromotedBy(promoter);
-                modUserCommunityTableRepository.save(checkMod);
+                modRepo.save(checkMod);
             }
 
             PromoterToCoOwnerResponse response = new PromoterToCoOwnerResponse(savedCoOwner.getCoOwnerUserCommunityId(), savedCoOwner.getUserId().getUserId(),
@@ -331,29 +331,29 @@ public class UserService {
         try{
             if(!toMod.toLowerCase(Locale.ROOT).equals("y") && !toMod.toLowerCase(Locale.ROOT).equals("n"))
                 throw new Exception("ToMod has an incorrect value");
-            Optional<UserTable> checkUser = userTableRepository.findById(userId);
+            Optional<UserTable> checkUser = userRepo.findById(userId);
             if(!checkUser.isPresent())
                 throw new Exception("User not present");
             UserTable user = checkUser.get();
-            Optional<CommunityTable> checkCommunity = communityTableRepository.findById(communityId);
+            Optional<CommunityTable> checkCommunity = communityRepo.findById(communityId);
             if(!checkCommunity.isPresent())
                 throw new Exception("Community not present");
             CommunityTable community = checkCommunity.get();
-            Optional<UserTable> checkDemoterId = userTableRepository.findById(demoterId);
+            Optional<UserTable> checkDemoterId = userRepo.findById(demoterId);
             if(!checkDemoterId.isPresent())
                 throw new Exception("Promoter not present");
             UserTable demoter = checkDemoterId.get();
 
-            CommunityTable checkOwner = communityTableRepository.findByCurrentOwnerAndCommunityId(demoter, community.getCommunityId());
+            CommunityTable checkOwner = communityRepo.findByCurrentOwnerAndCommunityId(demoter, community.getCommunityId());
             if(checkOwner == null)
                 throw new Exception("Demoter not the owner of the community hence cannot demote");
-            CoOwnerUserCommunityTable checkUserId = coOwnerUserCommunityTableRepository.findByUserIdAndCommunityId(user, community);
+            CoOwnerUserCommunityTable checkUserId = coOwnerRepo.findByUserIdAndCommunityId(user, community);
             if(checkUserId == null)
                 throw new Exception("User not found as the co owner of the community");
 
             checkUserId.setCurrentlyActive(false);
             checkUserId.setStatusChangeDate(new Date());
-            CoOwnerUserCommunityTable savedUser = coOwnerUserCommunityTableRepository.save(checkUserId);
+            CoOwnerUserCommunityTable savedUser = coOwnerRepo.save(checkUserId);
 
             DemoteFromCoOwnerResponse response = new DemoteFromCoOwnerResponse();
             response.setCoOwnerUserCommunityId(savedUser.getCoOwnerUserCommunityId());
@@ -364,7 +364,7 @@ public class UserService {
             response.setStatusChangeDate(savedUser.getStatusChangeDate());
 
             if(toMod.toLowerCase(Locale.ROOT).equals("y")){
-                ModUserCommunityTable checkMod = modUserCommunityTableRepository.findByCommunityTableAndUserId(community, user);
+                ModUserCommunityTable checkMod = modRepo.findByCommunityTableAndUserId(community, user);
                 if(checkMod == null){
                     ModUserCommunityTable modUserCommunityTable = new ModUserCommunityTable();
                     modUserCommunityTable.setCommunityTable(community);
@@ -373,14 +373,14 @@ public class UserService {
                     modUserCommunityTable.setPromotedBy(demoter);
                     modUserCommunityTable.setStatusChange(new Date());
                     modUserCommunityTable.setCurrentlyActiveMod(true);
-                    modUserCommunityTableRepository.save(modUserCommunityTable);
+                    modRepo.save(modUserCommunityTable);
                     response.setIsCurrentlyMod(true);
                 }else{
                     checkMod.setCurrentlyActiveMod(true);
                     checkMod.setBecomeModDate(new Date());
                     checkMod.setStatusChange(new Date());
                     checkMod.setPromotedBy(demoter);
-                    modUserCommunityTableRepository.save(checkMod);
+                    modRepo.save(checkMod);
                     response.setIsCurrentlyMod(true);
                 }
             }else{
@@ -398,48 +398,48 @@ public class UserService {
         try{
             if(banRequest.getUserToBeBanned().equals(banRequest.getPersonBanning()))
                 throw new Exception("Cannot ban your self i.e. the owner of the community");
-            Optional<UserTable> checkUserToBeBanned = userTableRepository.findById(banRequest.getUserToBeBanned());
+            Optional<UserTable> checkUserToBeBanned = userRepo.findById(banRequest.getUserToBeBanned());
             if(!checkUserToBeBanned.isPresent())
                 throw new Exception("Unable to find user");
             UserTable userToBeBanned = checkUserToBeBanned.get();
-            Optional<CommunityTable> checkCommunityId = communityTableRepository.findById(banRequest.getCommunityFromWhichToBeBanned());
+            Optional<CommunityTable> checkCommunityId = communityRepo.findById(banRequest.getCommunityFromWhichToBeBanned());
             if(!checkCommunityId.isPresent())
                 throw new Exception("Community not present");
             CommunityTable community = checkCommunityId.get();
-            Optional<UserTable> checkPersonBanning = userTableRepository.findById(banRequest.getPersonBanning());
+            Optional<UserTable> checkPersonBanning = userRepo.findById(banRequest.getPersonBanning());
             if(!checkPersonBanning.isPresent())
                 throw new Exception("Person banning not present");
             UserTable personBanning = checkPersonBanning.get();
-            NormalUserCommunityTable checkNormalUser = normalUserCommunityTableRepository.findByUserIdAndCommunityId(userToBeBanned, community);
+            NormalUserCommunityTable checkNormalUser = normalRepo.findByUserIdAndCommunityId(userToBeBanned, community);
             if(checkNormalUser == null)
                 throw new Exception("Unable to find the person in the community");
 
-            ModUserCommunityTable checkMod = modUserCommunityTableRepository.findByCommunityTableAndUserId(community, personBanning);
-            CoOwnerUserCommunityTable checkCoOwner = coOwnerUserCommunityTableRepository.findByUserIdAndCommunityId(personBanning, community);
-            CommunityTable checkOwner = communityTableRepository.findByCurrentOwnerAndCommunityId(personBanning, community.getCommunityId());
+            ModUserCommunityTable checkMod = modRepo.findByCommunityTableAndUserId(community, personBanning);
+            CoOwnerUserCommunityTable checkCoOwner = coOwnerRepo.findByUserIdAndCommunityId(personBanning, community);
+            CommunityTable checkOwner = communityRepo.findByCurrentOwnerAndCommunityId(personBanning, community.getCommunityId());
 
             if(checkMod == null && checkCoOwner == null && checkOwner == null)
                 throw new Exception("Not enough permissions to ban");
 
-            CoOwnerUserCommunityTable banAsCoOwner = coOwnerUserCommunityTableRepository.findByUserIdAndCommunityId(userToBeBanned, community);
+            CoOwnerUserCommunityTable banAsCoOwner = coOwnerRepo.findByUserIdAndCommunityId(userToBeBanned, community);
             if(banAsCoOwner != null){
                 banAsCoOwner.setCurrentlyActive(false);
                 banAsCoOwner.setStatusChangeDate(new Date());
-                coOwnerUserCommunityTableRepository.save(banAsCoOwner);
+                coOwnerRepo.save(banAsCoOwner);
             }
-            ModUserCommunityTable banAsMod = modUserCommunityTableRepository.findByCommunityTableAndUserId(community, userToBeBanned);
+            ModUserCommunityTable banAsMod = modRepo.findByCommunityTableAndUserId(community, userToBeBanned);
             if(banAsMod != null){
                 banAsMod.setCurrentlyActiveMod(false);
                 banAsMod.setStatusChange(new Date());
                 banAsMod.setPromotedBy(personBanning);
-                modUserCommunityTableRepository.save(banAsMod);
+                modRepo.save(banAsMod);
             }
 
             checkNormalUser.setIsUserBanned(true);
             checkNormalUser.setBannedBy(personBanning);
             checkNormalUser.setBanReason(banRequest.getBanReason());
             checkNormalUser.setDateBanned(new Date());
-            NormalUserCommunityTable savedBannedUser = normalUserCommunityTableRepository.save(checkNormalUser);
+            NormalUserCommunityTable savedBannedUser = normalRepo.save(checkNormalUser);
 
             BanPersonResponse response = new BanPersonResponse(savedBannedUser.getNormalUserCommunityId(), savedBannedUser.getUserId().getUserId()
                     , savedBannedUser.getCommunityId().getCommunityId(), savedBannedUser.getJoinDate(), savedBannedUser.getIsUserBanned(), savedBannedUser.getBanReason(),
@@ -455,24 +455,24 @@ public class UserService {
 
     public UnBanUserResponse unBanUser(Integer userId, Integer communityId, Integer unBanningId) throws Exception{
         try{
-            Optional<UserTable> checkUserId = userTableRepository.findById(userId);
+            Optional<UserTable> checkUserId = userRepo.findById(userId);
             if(!checkUserId.isPresent())
                 throw new Exception("Unable to find userId");
             UserTable user = checkUserId.get();
-            Optional<CommunityTable> checkCommunity = communityTableRepository.findById(communityId);
+            Optional<CommunityTable> checkCommunity = communityRepo.findById(communityId);
             if(!checkCommunity.isPresent())
                 throw new Exception("Unable to find community");
             CommunityTable community = checkCommunity.get();
-            Optional<UserTable> checkUnBanner = userTableRepository.findById(unBanningId);
+            Optional<UserTable> checkUnBanner = userRepo.findById(unBanningId);
             if(!checkUnBanner.isPresent())
                 throw new Exception("Unable to find un banning id");
             UserTable unBanner = checkUnBanner.get();
-            ModUserCommunityTable checkMod = modUserCommunityTableRepository.findByCommunityTableAndUserId(community, unBanner);
-            CoOwnerUserCommunityTable checkCoOwner = coOwnerUserCommunityTableRepository.findByUserIdAndCommunityId(unBanner, community);
-            CommunityTable checkOwner = communityTableRepository.findByCurrentOwnerAndCommunityId(unBanner, community.getCommunityId());
+            ModUserCommunityTable checkMod = modRepo.findByCommunityTableAndUserId(community, unBanner);
+            CoOwnerUserCommunityTable checkCoOwner = coOwnerRepo.findByUserIdAndCommunityId(unBanner, community);
+            CommunityTable checkOwner = communityRepo.findByCurrentOwnerAndCommunityId(unBanner, community.getCommunityId());
             if(checkOwner == null && checkCoOwner == null && checkMod == null)
                 throw new Exception("Not enough permissions to ban a user");
-            NormalUserCommunityTable checkUser = normalUserCommunityTableRepository.findByUserIdAndCommunityId(user, community);
+            NormalUserCommunityTable checkUser = normalRepo.findByUserIdAndCommunityId(user, community);
             if(checkUser == null)
                 throw new Exception("Unable to find user in the community");
             if(!checkUser.getIsUserBanned())
@@ -480,7 +480,7 @@ public class UserService {
             checkUser.setIsUserBanned(false);
             checkUser.setDateBanned(new Date());
             checkUser.setBannedBy(unBanner);
-            NormalUserCommunityTable savedUser = normalUserCommunityTableRepository.save(checkUser);
+            NormalUserCommunityTable savedUser = normalRepo.save(checkUser);
 
             UnBanUserResponse response = new UnBanUserResponse(savedUser.getNormalUserCommunityId(), savedUser.getUserId().getUserId(), savedUser.getCommunityId().getCommunityId(),
                     savedUser.getJoinDate(), savedUser.getIsUserBanned(), savedUser.getBanReason(), savedUser.getDateBanned(), savedUser.getBannedBy().getUserId());
@@ -495,33 +495,33 @@ public class UserService {
     public LeaveCommunityResponse leaveCommunity(Integer userId, Integer communityId) throws Exception{
         try{
             LeaveCommunityResponse response = new LeaveCommunityResponse();
-            Optional<UserTable> checkUser = userTableRepository.findById(userId);
+            Optional<UserTable> checkUser = userRepo.findById(userId);
             if(!checkUser.isPresent())
                 throw new Exception("Unable to find user");
             UserTable user = checkUser.get();
-            Optional<CommunityTable> checkCommunity = communityTableRepository.findById(communityId);
+            Optional<CommunityTable> checkCommunity = communityRepo.findById(communityId);
             if(!checkCommunity.isPresent())
                 throw new Exception("Unable to find community");
             CommunityTable community = checkCommunity.get();
-            NormalUserCommunityTable checkNormalUser = normalUserCommunityTableRepository.findByUserIdAndCommunityId(user, community);
+            NormalUserCommunityTable checkNormalUser = normalRepo.findByUserIdAndCommunityId(user, community);
             if(checkNormalUser== null)
                 throw new Exception("Cannot leave the community as user is not a part of it");
             if(checkNormalUser.getIsUserBanned())
                 throw new Exception("User is banned");
-            CoOwnerUserCommunityTable coOwner = coOwnerUserCommunityTableRepository.findByUserIdAndCommunityId(user, community);
+            CoOwnerUserCommunityTable coOwner = coOwnerRepo.findByUserIdAndCommunityId(user, community);
             if(coOwner!=null){
                 response.setCoOwnerIdDeleted(coOwner.getCoOwnerUserCommunityId());
-                coOwnerUserCommunityTableRepository.delete(coOwner);
+                coOwnerRepo.delete(coOwner);
             }
-            ModUserCommunityTable mod = modUserCommunityTableRepository.findByCommunityTableAndUserId(community, user);
+            ModUserCommunityTable mod = modRepo.findByCommunityTableAndUserId(community, user);
             if(mod != null){
                 response.setModUserIdDeleted(mod.getModUserId());
-                modUserCommunityTableRepository.delete(mod);
+                modRepo.delete(mod);
             }
             response.setCommunityId(checkNormalUser.getCommunityId().getCommunityId());
             response.setNormalUserIdDeleted(checkNormalUser.getNormalUserCommunityId());
             response.setUserId(checkNormalUser.getUserId().getUserId());
-            normalUserCommunityTableRepository.delete(checkNormalUser);
+            normalRepo.delete(checkNormalUser);
             return response;
         }catch (Exception e){
             log.error(e);
@@ -532,16 +532,16 @@ public class UserService {
     public GetCommunityDetailsResponse getCommunityDetails(Integer userId, Integer communityId) throws Exception{
         try{
             GetCommunityDetailsResponse response = new GetCommunityDetailsResponse();
-            Optional<UserTable> checkUser = userTableRepository.findById(userId);
+            Optional<UserTable> checkUser = userRepo.findById(userId);
             if(!checkUser.isPresent())
                 throw new Exception("Unable to find the user");
             UserTable user = checkUser.get();
-            Optional<CommunityTable> checkCommunity = communityTableRepository.findById(communityId);
+            Optional<CommunityTable> checkCommunity = communityRepo.findById(communityId);
             if(!checkCommunity.isPresent())
                 throw new Exception("Unable to find community");
             CommunityTable community = checkCommunity.get();
 
-            CommunityTable checkOwner = communityTableRepository.findByCurrentOwnerAndCommunityId(user, community.getCommunityId());
+            CommunityTable checkOwner = communityRepo.findByCurrentOwnerAndCommunityId(user, community.getCommunityId());
             if(checkOwner == null)
                 throw new Exception("User doesn't have enough permission for this action");
 
@@ -556,7 +556,7 @@ public class UserService {
             response.setCurrentOwnerName(checkOwner.getCurrentOwner().getUsername());
 
             List<NormalUserDescriptionForDetails> normalUsersDetails = new ArrayList<>();
-            List<NormalUserCommunityTable> listOfNormalUsers = normalUserCommunityTableRepository.findAll();
+            List<NormalUserCommunityTable> listOfNormalUsers = normalRepo.findAll();
             for(NormalUserCommunityTable n : listOfNormalUsers){
                 NormalUserDescriptionForDetails temp = new NormalUserDescriptionForDetails();
                 temp.setNormalUserId(n.getUserId().getUserId());
@@ -568,7 +568,7 @@ public class UserService {
             response.setListOfUsers(normalUsersDetails);
 
             List<ModUserDescriptionForDetails> modUsersDetails = new ArrayList<>();
-            List<ModUserCommunityTable> listOfModUsers = modUserCommunityTableRepository.findAll();
+            List<ModUserCommunityTable> listOfModUsers = modRepo.findAll();
             for(ModUserCommunityTable n : listOfModUsers){
                 ModUserDescriptionForDetails temp = new ModUserDescriptionForDetails();
                 temp.setModId(n.getUserId().getUserId());
@@ -579,7 +579,7 @@ public class UserService {
             response.setListOfMods(modUsersDetails);
 
             List<CoOwnerDescriptionForDetails> coOwnerDetails = new ArrayList<>();
-            List<CoOwnerUserCommunityTable> listOfCoOwnerUsers = coOwnerUserCommunityTableRepository.findAll();
+            List<CoOwnerUserCommunityTable> listOfCoOwnerUsers = coOwnerRepo.findAll();
             for(CoOwnerUserCommunityTable n : listOfCoOwnerUsers){
                 CoOwnerDescriptionForDetails temp = new CoOwnerDescriptionForDetails();
                 temp.setCoOwnerId(n.getUserId().getUserId());
@@ -598,7 +598,7 @@ public class UserService {
 
     public ModifyCommunityResponse modifyCommunityRequest(ModifyCommunityRequest modifyCommunityRequest) throws Exception {
         try{
-            Optional<CommunityTable> checkCommunity = communityTableRepository.findById(modifyCommunityRequest.getCommunityId());
+            Optional<CommunityTable> checkCommunity = communityRepo.findById(modifyCommunityRequest.getCommunityId());
             if(!checkCommunity.isPresent())
                 throw new Exception("Unable to fetch community");
             CommunityTable community = checkCommunity.get();
@@ -607,7 +607,7 @@ public class UserService {
             community.setRules(modifyCommunityRequest.getRules());
             community.setCommunityDescription(modifyCommunityRequest.getCommunityDescription());
 
-            CommunityTable savedCommunity = communityTableRepository.save(community);
+            CommunityTable savedCommunity = communityRepo.save(community);
 
             ModifyCommunityResponse response = new ModifyCommunityResponse(savedCommunity.getCommunityId(), savedCommunity.getCommunityName(), savedCommunity.getCommunityDescription()
             , savedCommunity.getCreationDate(), savedCommunity.getRules(), savedCommunity.getCreatorId(), savedCommunity.getCurrentOwner());
@@ -620,11 +620,11 @@ public class UserService {
 
     public List<FetchCommunitiesResponse> fetchCommunities(Integer userId) throws Exception{
         try{
-            Optional<UserTable> checkUser = userTableRepository.findById(userId);
+            Optional<UserTable> checkUser = userRepo.findById(userId);
             if(!checkUser.isPresent())
                 throw new Exception("Unable to find user");
             UserTable user = checkUser.get();
-            List<Object> communitiesFromDB = communityTableRepository.findCommunitiesNotJoined(user.getUserId());
+            List<Object> communitiesFromDB = communityRepo.findCommunitiesNotJoined(user.getUserId());
             if(communitiesFromDB.size()==0)
                 return new ArrayList<>();
             List<FetchCommunitiesResponse> response = new ArrayList<>();
@@ -633,7 +633,7 @@ public class UserService {
                 temp.setCommunityId((Integer) ((Object[])communitiesFromDB.get(i))[0]);
                 temp.setCommunityName(((Object[])communitiesFromDB.get(i))[1].toString());
                 temp.setCommunityDescription(((Object[])communitiesFromDB.get(i))[2].toString());
-                List<Object> getRulesFromDB = communityTableRepository.fetchRules(temp.getCommunityId());
+                List<Object> getRulesFromDB = communityRepo.fetchRules(temp.getCommunityId());
                 if(getRulesFromDB.size()!=0){
                     log.error(getRulesFromDB.size());
                     List<String> rules = new ArrayList<>();
@@ -654,11 +654,11 @@ public class UserService {
 
     public List<FetchCommunitiesResponse> fetchCommunitiesOfUser(Integer userId) throws Exception{
         try{
-            Optional<UserTable> checkUser = userTableRepository.findById(userId);
+            Optional<UserTable> checkUser = userRepo.findById(userId);
             if(!checkUser.isPresent())
                 throw new Exception("Unable to find user");
             UserTable user = checkUser.get();
-            List<Object> communitiesFromDB = communityTableRepository.findCommunitiesJoined(user.getUserId());
+            List<Object> communitiesFromDB = communityRepo.findCommunitiesJoined(user.getUserId());
             if(communitiesFromDB.size()==0)
                 return new ArrayList<>();
             List<FetchCommunitiesResponse> response = new ArrayList<>();
@@ -667,7 +667,7 @@ public class UserService {
                 temp.setCommunityId((Integer) ((Object[])communitiesFromDB.get(i))[0]);
                 temp.setCommunityName(((Object[])communitiesFromDB.get(i))[1].toString());
                 temp.setCommunityDescription(((Object[])communitiesFromDB.get(i))[2].toString());
-                List<Object> getRulesFromDB = communityTableRepository.fetchRules(temp.getCommunityId());
+                List<Object> getRulesFromDB = communityRepo.fetchRules(temp.getCommunityId());
                 if(getRulesFromDB.size()!=0){
                     log.error(getRulesFromDB.size());
                     List<String> rules = new ArrayList<>();
@@ -690,39 +690,39 @@ public class UserService {
         try{
             if(newOwner.equals(oldOwner))
                 throw new Exception("Old and new owner cannot be same");
-            Optional<UserTable> newOwnerId = userTableRepository.findById(newOwner);
+            Optional<UserTable> newOwnerId = userRepo.findById(newOwner);
             if(!newOwnerId.isPresent())
                 throw new Exception("new owner not present");
             UserTable newOwnerUser = newOwnerId.get();
-            Optional<UserTable> oldOwnerId = userTableRepository.findById(oldOwner);
+            Optional<UserTable> oldOwnerId = userRepo.findById(oldOwner);
             if(!oldOwnerId.isPresent())
                 throw new Exception("Unable to find old owner");
             UserTable oldOwnerUser = oldOwnerId.get();
-            Optional<CommunityTable> communityTable = communityTableRepository.findById(communityId);
+            Optional<CommunityTable> communityTable = communityRepo.findById(communityId);
             if(!communityTable.isPresent())
                 throw new Exception("Unable to find community");
             CommunityTable community = communityTable.get();
-            CommunityTable currentOwner = communityTableRepository.findByCurrentOwnerAndCommunityId(oldOwnerUser, community.getCommunityId());
+            CommunityTable currentOwner = communityRepo.findByCurrentOwnerAndCommunityId(oldOwnerUser, community.getCommunityId());
             if(currentOwner==null)
                 throw new Exception("Current owner not found for the community mentioned");
-            NormalUserCommunityTable userInCommunity = normalUserCommunityTableRepository.findByUserIdAndCommunityId(newOwnerUser, community);
+            NormalUserCommunityTable userInCommunity = normalRepo.findByUserIdAndCommunityId(newOwnerUser, community);
             if(userInCommunity==null)
                 throw new Exception("Unable to find the user in community");
-            ModUserCommunityTable checkMod = modUserCommunityTableRepository.findByCommunityTableAndUserId(community, newOwnerUser);
-            CoOwnerUserCommunityTable checkCo = coOwnerUserCommunityTableRepository.findByUserIdAndCommunityId(newOwnerUser, community);
+            ModUserCommunityTable checkMod = modRepo.findByCommunityTableAndUserId(community, newOwnerUser);
+            CoOwnerUserCommunityTable checkCo = coOwnerRepo.findByUserIdAndCommunityId(newOwnerUser, community);
             if(checkMod != null)
-                modUserCommunityTableRepository.delete(checkMod);
+                modRepo.delete(checkMod);
             if(checkCo != null)
-                coOwnerUserCommunityTableRepository.delete(checkCo);
+                coOwnerRepo.delete(checkCo);
             community.setCurrentOwner(newOwnerUser);
-            CommunityTable savedCommunity = communityTableRepository.save(community);
+            CommunityTable savedCommunity = communityRepo.save(community);
             CoOwnerUserCommunityTable newCoOwner = new CoOwnerUserCommunityTable();
             newCoOwner.setUserId(oldOwnerUser);
             newCoOwner.setCommunityId(community);
             newCoOwner.setBecomeCoOwnerDate(new Date());
             newCoOwner.setCurrentlyActive(true);
             newCoOwner.setStatusChangeDate(new Date());
-            CoOwnerUserCommunityTable savedNewCoOwner = coOwnerUserCommunityTableRepository.save(newCoOwner);
+            CoOwnerUserCommunityTable savedNewCoOwner = coOwnerRepo.save(newCoOwner);
 
             TransferOwnershipResponse response = new TransferOwnershipResponse(savedCommunity.getCurrentOwner().getUserId(), oldOwnerUser.getUserId(), savedCommunity.getCommunityId(),
                     community.getCommunityName(), savedNewCoOwner.getStatusChangeDate());

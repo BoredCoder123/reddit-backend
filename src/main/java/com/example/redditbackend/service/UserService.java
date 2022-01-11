@@ -5,13 +5,10 @@ import com.example.redditbackend.repository.*;
 import com.example.redditbackend.request.*;
 import com.example.redditbackend.response.*;
 import com.example.redditbackend.utility.SHA256;
-import lombok.NoArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import sun.reflect.annotation.ExceptionProxy;
 
-import javax.transaction.Transactional;
 import java.util.*;
 
 @Service
@@ -686,6 +683,53 @@ public class UserService {
         }catch (Exception e){
             log.error(e);
             throw new Exception("Unable to fetch communities because: "+e);
+        }
+    }
+
+    public TransferOwnershipResponse transferOwnership(Integer newOwner, Integer communityId, Integer oldOwner) throws Exception {
+        try{
+            if(newOwner.equals(oldOwner))
+                throw new Exception("Old and new owner cannot be same");
+            Optional<UserTable> newOwnerId = userTableRepository.findById(newOwner);
+            if(!newOwnerId.isPresent())
+                throw new Exception("new owner not present");
+            UserTable newOwnerUser = newOwnerId.get();
+            Optional<UserTable> oldOwnerId = userTableRepository.findById(oldOwner);
+            if(!oldOwnerId.isPresent())
+                throw new Exception("Unable to find old owner");
+            UserTable oldOwnerUser = oldOwnerId.get();
+            Optional<CommunityTable> communityTable = communityTableRepository.findById(communityId);
+            if(!communityTable.isPresent())
+                throw new Exception("Unable to find community");
+            CommunityTable community = communityTable.get();
+            CommunityTable currentOwner = communityTableRepository.findByCurrentOwnerAndCommunityId(oldOwnerUser, community.getCommunityId());
+            if(currentOwner==null)
+                throw new Exception("Current owner not found for the community mentioned");
+            NormalUserCommunityTable userInCommunity = normalUserCommunityTableRepository.findByUserIdAndCommunityId(newOwnerUser, community);
+            if(userInCommunity==null)
+                throw new Exception("Unable to find the user in community");
+            ModUserCommunityTable checkMod = modUserCommunityTableRepository.findByCommunityTableAndUserId(community, newOwnerUser);
+            CoOwnerUserCommunityTable checkCo = coOwnerUserCommunityTableRepository.findByUserIdAndCommunityId(newOwnerUser, community);
+            if(checkMod != null)
+                modUserCommunityTableRepository.delete(checkMod);
+            if(checkCo != null)
+                coOwnerUserCommunityTableRepository.delete(checkCo);
+            community.setCurrentOwner(newOwnerUser);
+            CommunityTable savedCommunity = communityTableRepository.save(community);
+            CoOwnerUserCommunityTable newCoOwner = new CoOwnerUserCommunityTable();
+            newCoOwner.setUserId(oldOwnerUser);
+            newCoOwner.setCommunityId(community);
+            newCoOwner.setBecomeCoOwnerDate(new Date());
+            newCoOwner.setCurrentlyActive(true);
+            newCoOwner.setStatusChangeDate(new Date());
+            CoOwnerUserCommunityTable savedNewCoOwner = coOwnerUserCommunityTableRepository.save(newCoOwner);
+
+            TransferOwnershipResponse response = new TransferOwnershipResponse(savedCommunity.getCurrentOwner().getUserId(), oldOwnerUser.getUserId(), savedCommunity.getCommunityId(),
+                    community.getCommunityName(), savedNewCoOwner.getStatusChangeDate());
+            return response;
+        }catch (Exception e){
+            log.error(e);
+            throw new Exception("Unable to transfer ownership because: "+e);
         }
     }
 }

@@ -209,5 +209,14 @@ public class UserController {
             return new ResponseEntity("Unable to fetch communities", HttpStatus.CONFLICT);
         }
     }
-    //Write controller for fetch communities by normal user, transfer ownership of community
+
+    @PostMapping("transfer-ownership/{newOwner}/{communityId}/{oldOwner}")
+    public ResponseEntity transferOwnership(@PathVariable Integer newOwner, @PathVariable Integer communityId, @PathVariable Integer oldOwner){
+        try{
+            return new ResponseEntity(userService.transferOwnership(newOwner, communityId, oldOwner), HttpStatus.OK);
+        }catch (Exception e){
+            log.error(e);
+            return new ResponseEntity("Unable to transfer ownership", HttpStatus.CONFLICT);
+        }
+    }
 }

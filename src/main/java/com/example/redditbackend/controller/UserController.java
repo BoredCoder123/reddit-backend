@@ -199,5 +199,15 @@ public class UserController {
             return new ResponseEntity("Unable to fetch communities", HttpStatus.CONFLICT);
         }
     }
+
+    @GetMapping("/community-of-user/{userId}")
+    public ResponseEntity fetchCommunitiesOfUser(@PathVariable Integer userId){
+        try{
+            return new ResponseEntity(userService.fetchCommunitiesOfUser(userId), HttpStatus.OK);
+        }catch (Exception e){
+            log.error(e);
+            return new ResponseEntity("Unable to fetch communities", HttpStatus.CONFLICT);
+        }
+    }
     //Write controller for fetch communities by normal user, transfer ownership of community
 }

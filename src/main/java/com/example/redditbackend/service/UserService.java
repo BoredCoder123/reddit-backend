@@ -641,7 +641,41 @@ public class UserService {
                     log.error(getRulesFromDB.size());
                     List<String> rules = new ArrayList<>();
                     for(int j=0;j<getRulesFromDB.size();j++){
-                        String s = ((Object[])communitiesFromDB.get(i))[1].toString();
+                        String s = getRulesFromDB.get(j).toString();
+                        rules.add(s);
+                    }
+                    temp.setRules(rules);
+                }
+                response.add(temp);
+            }
+            return response;
+        }catch (Exception e){
+            log.error(e);
+            throw new Exception("Unable to fetch communities because: "+e);
+        }
+    }
+
+    public List<FetchCommunitiesResponse> fetchCommunitiesOfUser(Integer userId) throws Exception{
+        try{
+            Optional<UserTable> checkUser = userTableRepository.findById(userId);
+            if(!checkUser.isPresent())
+                throw new Exception("Unable to find user");
+            UserTable user = checkUser.get();
+            List<Object> communitiesFromDB = communityTableRepository.findCommunitiesJoined(user.getUserId());
+            if(communitiesFromDB.size()==0)
+                return new ArrayList<>();
+            List<FetchCommunitiesResponse> response = new ArrayList<>();
+            for(int i=0; i<communitiesFromDB.size();i++){
+                FetchCommunitiesResponse temp = new FetchCommunitiesResponse();
+                temp.setCommunityId((Integer) ((Object[])communitiesFromDB.get(i))[0]);
+                temp.setCommunityName(((Object[])communitiesFromDB.get(i))[1].toString());
+                temp.setCommunityDescription(((Object[])communitiesFromDB.get(i))[2].toString());
+                List<Object> getRulesFromDB = communityTableRepository.fetchRules(temp.getCommunityId());
+                if(getRulesFromDB.size()!=0){
+                    log.error(getRulesFromDB.size());
+                    List<String> rules = new ArrayList<>();
+                    for(int j=0;j<getRulesFromDB.size();j++){
+                        String s = getRulesFromDB.get(j).toString();
                         rules.add(s);
                     }
                     temp.setRules(rules);

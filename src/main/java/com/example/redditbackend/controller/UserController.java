@@ -189,5 +189,15 @@ public class UserController {
             return new ResponseEntity("Unable to modify details", HttpStatus.CONFLICT);
         }
     }
-    //Write controller for modification of commmunity, fetch communities by normal user, transfer ownership of community
+
+    @GetMapping("/community-for-user/{userId}")
+    public ResponseEntity fetchCommunities(@PathVariable Integer userId){
+        try{
+            return new ResponseEntity(userService.fetchCommunities(userId), HttpStatus.OK);
+        }catch (Exception e){
+            log.error(e);
+            return new ResponseEntity("Unable to fetch communities", HttpStatus.CONFLICT);
+        }
+    }
+    //Write controller for fetch communities by normal user, transfer ownership of community
 }

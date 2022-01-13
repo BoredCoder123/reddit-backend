@@ -46,4 +46,14 @@ public class PostTable {
 
     @Column(name="ban_reason")
     private String banReason;
+
+    public PostTable(UserTable userPosted, CommunityTable communityId, Date postDate, PostType postType, Integer likes, Integer dislikes, Boolean isPostBanned) {
+        this.userPosted = userPosted;
+        this.communityId = communityId;
+        this.postDate = postDate;
+        this.postType = postType;
+        this.likes = likes;
+        this.dislikes = dislikes;
+        this.isPostBanned = isPostBanned;
+    }
 }

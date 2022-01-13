@@ -2,9 +2,11 @@ package com.example.redditbackend.utility;
 
 import com.example.redditbackend.entity.CommunityTable;
 import com.example.redditbackend.entity.NormalUserCommunityTable;
+import com.example.redditbackend.entity.PostTable;
 import com.example.redditbackend.entity.UserTable;
 import com.example.redditbackend.repository.CommunityTableRepository;
 import com.example.redditbackend.repository.NormalUserCommunityTableRepository;
+import com.example.redditbackend.repository.PostTableRepository;
 import com.example.redditbackend.repository.UserTableRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -21,6 +23,9 @@ public class CheckExistence {
 
     @Autowired
     private NormalUserCommunityTableRepository normalRepo;
+
+    @Autowired
+    private PostTableRepository postRepo;
 
     public UserTable postTest(){
         return userRepo.findByUsername("test1");
@@ -47,5 +52,12 @@ public class CheckExistence {
         if(checkUser.getIsUserBanned())
             throw new Exception("User is banned in the community");
         return checkUser;
+    }
+
+    public PostTable checkPostsExists(Integer postId) throws Exception{
+        Optional<PostTable> checkPost = postRepo.findById(postId);
+        if(!checkPost.isPresent())
+            throw new Exception("Unable to find post");
+        return checkPost.get();
     }
 }

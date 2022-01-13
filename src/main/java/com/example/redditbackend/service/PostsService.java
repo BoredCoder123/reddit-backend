@@ -4,6 +4,7 @@ import com.example.redditbackend.entity.*;
 import com.example.redditbackend.repository.*;
 import com.example.redditbackend.request.AddPostRequest;
 import com.example.redditbackend.response.AddPostResponse;
+import com.example.redditbackend.response.LikePostResponse;
 import com.example.redditbackend.utility.CheckExistence;
 import com.example.redditbackend.utility.PostType;
 import lombok.extern.log4j.Log4j2;
@@ -105,6 +106,41 @@ public class PostsService {
         }catch (Exception e){
             log.error(e);
             throw new Exception("Unable to add posts because: "+e);
+        }
+    }
+
+    public LikePostResponse likePost(Integer userId, Integer postId) throws Exception {
+        try{
+            LikePostResponse response = new LikePostResponse();
+            UserTable user = checkExistence.checkUserExists(userId);
+            PostTable post = checkExistence.checkPostsExists(postId);
+            LikesTable existingLike = likesRepo.findByPostIdAndUserId(post, user);
+            if(existingLike == null){
+                LikesTable newLike = new LikesTable();
+                newLike.setDateAdded(new Date());
+                newLike.setPostId(post);
+                newLike.setUserId(user);
+                LikesTable savedLike = likesRepo.save(newLike);
+                post.setLikes(post.getLikes()+1);
+                PostTable savedPost = postRepo.save(post);
+                response.setLikedAdded(savedLike.getLikesId());
+                response.setLikeCount(savedPost.getLikes());
+                response.setPostId(savedLike.getPostId().getPostId());
+            }else{
+                likesRepo.delete(existingLike);
+                if(post.getLikes()>1)
+                    post.setLikes(post.getLikes()-1);
+                else
+                    post.setLikes(0);
+                PostTable savedPost = postRepo.save(post);
+                response.setLikeRemoved(existingLike.getLikesId());
+                response.setPostId(savedPost.getPostId());
+            }
+            response.setUserId(user.getUserId());
+            return response;
+        }catch (Exception e){
+            log.error(e);
+            throw new Exception("Unable to like post because: "+e);
         }
     }
 }

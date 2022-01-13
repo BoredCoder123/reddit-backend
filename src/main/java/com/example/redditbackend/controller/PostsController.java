@@ -7,10 +7,7 @@ import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @Log4j2
@@ -27,10 +24,20 @@ public class PostsController {
     @PostMapping("/content")
     public ResponseEntity addPost(@RequestBody AddPostRequest addPostRequest){
         try{
-            return new ResponseEntity(postsService.addPosts(addPostRequest), HttpStatus.OK);
+            return new ResponseEntity<>(postsService.addPosts(addPostRequest), HttpStatus.OK);
         }catch (Exception e){
             log.error(e);
-            return new ResponseEntity("Unable to add a post", HttpStatus.CONFLICT);
+            return new ResponseEntity<>("Unable to add a post", HttpStatus.CONFLICT);
+        }
+    }
+
+    @PostMapping("/like-post/{userId}/{postId}")
+    public ResponseEntity likePost(@PathVariable Integer userId, @PathVariable Integer postId){
+        try{
+            return new ResponseEntity(postsService.likePost(userId, postId), HttpStatus.OK);
+        }catch (Exception e){
+            log.error(e);
+            return new ResponseEntity("Unable to like post", HttpStatus.CONFLICT);
         }
     }
 }

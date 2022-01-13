@@ -9,11 +9,12 @@ import lombok.Setter;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-public class LikePostResponse {
+public class DislikeResponse {
     private Integer userId;
     private Integer postId;
     private Integer commentId;
-    private Integer likedAdded;
-    private Integer likeRemoved;
-    private Integer likeCount;
+    private Integer dislikedAdded;
+    private Integer dislikeRemoved;
+    private Integer dislikeCount;
+    private Integer likeDeleted;
 }

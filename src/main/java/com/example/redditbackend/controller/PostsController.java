@@ -40,4 +40,14 @@ public class PostsController {
             return new ResponseEntity("Unable to like post", HttpStatus.CONFLICT);
         }
     }
+
+    @PostMapping("dislike-post/{userId}/{postId}")
+    public ResponseEntity dislikePost(@PathVariable Integer userId, @PathVariable Integer postId){
+        try{
+            return new ResponseEntity(postsService.dislikePost(userId, postId), HttpStatus.OK);
+        }catch (Exception e){
+            log.error(e);
+            return new ResponseEntity("Unable to dislike post", HttpStatus.CONFLICT);
+        }
+    }
 }

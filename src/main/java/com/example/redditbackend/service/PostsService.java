@@ -4,7 +4,8 @@ import com.example.redditbackend.entity.*;
 import com.example.redditbackend.repository.*;
 import com.example.redditbackend.request.AddPostRequest;
 import com.example.redditbackend.response.AddPostResponse;
-import com.example.redditbackend.response.LikePostResponse;
+import com.example.redditbackend.response.DislikeResponse;
+import com.example.redditbackend.response.LikeResponse;
 import com.example.redditbackend.utility.CheckExistence;
 import com.example.redditbackend.utility.PostType;
 import lombok.extern.log4j.Log4j2;
@@ -109,13 +110,19 @@ public class PostsService {
         }
     }
 
-    public LikePostResponse likePost(Integer userId, Integer postId) throws Exception {
+    public LikeResponse likePost(Integer userId, Integer postId) throws Exception {
         try{
-            LikePostResponse response = new LikePostResponse();
+            LikeResponse response = new LikeResponse();
             UserTable user = checkExistence.checkUserExists(userId);
             PostTable post = checkExistence.checkPostsExists(postId);
             LikesTable existingLike = likesRepo.findByPostIdAndUserId(post, user);
             if(existingLike == null){
+                DislikesTable checkDislike = dislikesRepo.findByPostIdAndUserId(post, user);
+                if(checkDislike !=null){
+                    dislikesRepo.delete(checkDislike);
+                    post.setDislikes(post.getDislikes()-1);
+                    response.setDislikeDeleted(checkDislike.getDislikesId());
+                }
                 LikesTable newLike = new LikesTable();
                 newLike.setDateAdded(new Date());
                 newLike.setPostId(post);
@@ -141,6 +148,43 @@ public class PostsService {
         }catch (Exception e){
             log.error(e);
             throw new Exception("Unable to like post because: "+e);
+        }
+    }
+
+    public DislikeResponse dislikePost(Integer userId, Integer postId) throws Exception{
+        try{
+            DislikeResponse response = new DislikeResponse();
+            UserTable user = checkExistence.checkUserExists(userId);
+            PostTable post = checkExistence.checkPostsExists(postId);
+            DislikesTable dislike = dislikesRepo.findByPostIdAndUserId(post, user);
+            LikesTable like = likesRepo.findByPostIdAndUserId(post, user);
+            DislikesTable savedDislike;
+            if(dislike == null){
+                if(like!=null){
+                    likesRepo.delete(like);
+                    post.setLikes(post.getLikes()-1);
+                    response.setLikeDeleted(like.getLikesId());
+                }
+                DislikesTable newDislike = new DislikesTable();
+                newDislike.setPostId(post);
+                newDislike.setDateAdded(new Date());
+                newDislike.setUserId(user);
+                savedDislike = dislikesRepo.save(newDislike);
+                response.setDislikedAdded(savedDislike.getDislikesId());
+                post.setDislikes(post.getDislikes()+1);
+            }else{
+                dislikesRepo.delete(dislike);
+                post.setDislikes(post.getDislikes()-1);
+                response.setDislikeRemoved(dislike.getDislikesId());
+            }
+            PostTable savedPost = postRepo.save(post);
+            response.setPostId(savedPost.getPostId());
+            response.setDislikeCount(savedPost.getDislikes());
+            response.setUserId(user.getUserId());
+            return response;
+        }catch (Exception e){
+            log.error(e);
+            throw new Exception("Unable to dislike post because: "+e);
         }
     }
 }

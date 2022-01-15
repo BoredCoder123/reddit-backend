@@ -2,6 +2,7 @@ package com.example.redditbackend.controller;
 
 import com.example.redditbackend.entity.UserTable;
 import com.example.redditbackend.request.AddPostRequest;
+import com.example.redditbackend.request.PostCommentRequest;
 import com.example.redditbackend.service.PostsService;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,7 +22,7 @@ public class PostsController {
         return new ResponseEntity<>(postsService.testPosts(), HttpStatus.OK);
     }
 
-    @PostMapping("/content")
+    @PostMapping("/meme")
     public ResponseEntity addPost(@RequestBody AddPostRequest addPostRequest){
         try{
             return new ResponseEntity<>(postsService.addPosts(addPostRequest), HttpStatus.OK);
@@ -48,6 +49,16 @@ public class PostsController {
         }catch (Exception e){
             log.error(e);
             return new ResponseEntity("Unable to dislike post", HttpStatus.CONFLICT);
+        }
+    }
+
+    @PostMapping("/comment")
+    public ResponseEntity postComment(@RequestBody PostCommentRequest postCommentRequest){
+        try{
+            return new ResponseEntity(postsService.postComment(postCommentRequest), HttpStatus.OK);
+        }catch (Exception e){
+            log.error(e);
+            return new ResponseEntity("Unable to post comment", HttpStatus.CONFLICT);
         }
     }
 }

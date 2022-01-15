@@ -9,6 +9,7 @@ import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import javax.transaction.Transactional;
 import java.util.*;
 
 @Service
@@ -29,6 +30,7 @@ public class UserService {
     @Autowired
     protected NormalUserCommunityTableRepository normalRepo;
 
+    @Transactional
     public RegisterResponse register(RegisterRequest registerRequest) throws Exception{
         try{
             UserTable checkExistingUser = userRepo.findByEmail(registerRequest.getEmail());
@@ -52,6 +54,7 @@ public class UserService {
         }
     }
 
+    @Transactional
     public LoginResponse login(LoginRequest loginRequest) throws Exception{
         try{
             UserTable checkUser = userRepo.findByUsername(loginRequest.getUsername());
@@ -67,6 +70,7 @@ public class UserService {
         }
     }
 
+    @Transactional
     public CreateCommunityResponse createCommunity(CommunityRequest communityRequest) throws Exception{
         try{
             Optional<UserTable> checkUser = userRepo.findById(communityRequest.getCreatorId());
@@ -103,6 +107,7 @@ public class UserService {
         }
     }
 
+    @Transactional
     public List<CommunityResponse> getAllCommunities() throws Exception{
         try{
             List<CommunityTable> communityTableList =  communityRepo.findAll();
@@ -119,6 +124,7 @@ public class UserService {
         }
     }
 
+    @Transactional
     public List<CommunityResponse> getAllCommunities(String username) throws Exception{
         try{
             UserTable userTable = userRepo.findByUsername(username);
@@ -138,6 +144,7 @@ public class UserService {
         }
     }
 
+    @Transactional
     public List<CommunityResponse> getAllCommunitiesByCreatorId(String username) throws Exception{
         try{
             UserTable userTable = userRepo.findByUsername(username);
@@ -157,6 +164,7 @@ public class UserService {
         }
     }
 
+    @Transactional
     public JoinCommunityResponse joinCommunity(Integer userId, Integer communityId) throws Exception{
         try{
             Optional<UserTable> checkUser = userRepo.findById(userId);
@@ -185,6 +193,7 @@ public class UserService {
         }
     }
 
+    @Transactional
     public PromoteToModResponse promoteToMod(Integer userId, Integer communityId, Integer promoterId) throws Exception{
         try{
             Optional<UserTable> checkUser = userRepo.findById(userId);
@@ -238,6 +247,7 @@ public class UserService {
         }
     }
 
+    @Transactional
     public PromoteToModResponse demoteFromMod(Integer userId, Integer communityId, Integer demoterId) throws Exception{
         try{
             Optional<UserTable> checkUser = userRepo.findById(userId);
@@ -272,6 +282,7 @@ public class UserService {
         }
     }
 
+    @Transactional
     public PromoterToCoOwnerResponse promoteToCoOwner(Integer userId, Integer communityId, Integer promoterId) throws Exception{
         try{
             Optional<UserTable> checkUser = userRepo.findById(userId);
@@ -327,6 +338,7 @@ public class UserService {
         }
     }
 
+    @Transactional
     public DemoteFromCoOwnerResponse demoteFromCoOwner(Integer userId, Integer communityId, Integer demoterId, String toMod) throws Exception{
         try{
             if(!toMod.toLowerCase(Locale.ROOT).equals("y") && !toMod.toLowerCase(Locale.ROOT).equals("n"))
@@ -394,6 +406,7 @@ public class UserService {
         }
     }
 
+    @Transactional
     public BanPersonResponse banUser(BanRequest banRequest) throws Exception{
         try{
             if(banRequest.getUserToBeBanned().equals(banRequest.getPersonBanning()))
@@ -453,6 +466,7 @@ public class UserService {
         }
     }
 
+    @Transactional
     public UnBanUserResponse unBanUser(Integer userId, Integer communityId, Integer unBanningId) throws Exception{
         try{
             Optional<UserTable> checkUserId = userRepo.findById(userId);
@@ -492,6 +506,7 @@ public class UserService {
         }
     }
 
+    @Transactional
     public LeaveCommunityResponse leaveCommunity(Integer userId, Integer communityId) throws Exception{
         try{
             LeaveCommunityResponse response = new LeaveCommunityResponse();
@@ -529,6 +544,7 @@ public class UserService {
         }
     }
 
+    @Transactional
     public GetCommunityDetailsResponse getCommunityDetails(Integer userId, Integer communityId) throws Exception{
         try{
             GetCommunityDetailsResponse response = new GetCommunityDetailsResponse();
@@ -596,6 +612,7 @@ public class UserService {
         }
     }
 
+    @Transactional
     public ModifyCommunityResponse modifyCommunityRequest(ModifyCommunityRequest modifyCommunityRequest) throws Exception {
         try{
             Optional<CommunityTable> checkCommunity = communityRepo.findById(modifyCommunityRequest.getCommunityId());
@@ -618,6 +635,7 @@ public class UserService {
         }
     }
 
+    @Transactional
     public List<FetchCommunitiesResponse> fetchCommunities(Integer userId) throws Exception{
         try{
             Optional<UserTable> checkUser = userRepo.findById(userId);
@@ -652,6 +670,7 @@ public class UserService {
         }
     }
 
+    @Transactional
     public List<FetchCommunitiesResponse> fetchCommunitiesOfUser(Integer userId) throws Exception{
         try{
             Optional<UserTable> checkUser = userRepo.findById(userId);
@@ -686,6 +705,7 @@ public class UserService {
         }
     }
 
+    @Transactional
     public TransferOwnershipResponse transferOwnership(Integer newOwner, Integer communityId, Integer oldOwner) throws Exception {
         try{
             if(newOwner.equals(oldOwner))

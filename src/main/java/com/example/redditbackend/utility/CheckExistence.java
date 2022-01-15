@@ -1,13 +1,7 @@
 package com.example.redditbackend.utility;
 
-import com.example.redditbackend.entity.CommunityTable;
-import com.example.redditbackend.entity.NormalUserCommunityTable;
-import com.example.redditbackend.entity.PostTable;
-import com.example.redditbackend.entity.UserTable;
-import com.example.redditbackend.repository.CommunityTableRepository;
-import com.example.redditbackend.repository.NormalUserCommunityTableRepository;
-import com.example.redditbackend.repository.PostTableRepository;
-import com.example.redditbackend.repository.UserTableRepository;
+import com.example.redditbackend.entity.*;
+import com.example.redditbackend.repository.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -26,6 +20,9 @@ public class CheckExistence {
 
     @Autowired
     private PostTableRepository postRepo;
+
+    @Autowired
+    private CommentsTableRepository commentRepo;
 
     public UserTable postTest(){
         return userRepo.findByUsername("test1");
@@ -59,5 +56,12 @@ public class CheckExistence {
         if(!checkPost.isPresent())
             throw new Exception("Unable to find post");
         return checkPost.get();
+    }
+
+    public CommentsTable checkCommentExists(Integer commentId) throws Exception{
+        Optional<CommentsTable> checkComment = commentRepo.findById(commentId);
+        if(!checkComment.isPresent())
+            throw new Exception("Unable to find comment");
+        return checkComment.get();
     }
 }

@@ -3,15 +3,18 @@ package com.example.redditbackend.service;
 import com.example.redditbackend.entity.*;
 import com.example.redditbackend.repository.*;
 import com.example.redditbackend.request.AddPostRequest;
+import com.example.redditbackend.request.PostCommentRequest;
 import com.example.redditbackend.response.AddPostResponse;
 import com.example.redditbackend.response.DislikeResponse;
 import com.example.redditbackend.response.LikeResponse;
+import com.example.redditbackend.response.PostCommentResponse;
 import com.example.redditbackend.utility.CheckExistence;
 import com.example.redditbackend.utility.PostType;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import javax.transaction.Transactional;
 import java.util.Date;
 
 @Service
@@ -42,10 +45,14 @@ public class PostsService {
     @Autowired
     private PostTypeVideoRepository videoRepo;
 
+    @Autowired
+    private CommentsTableRepository commentRepo;
+
     public UserTable testPosts() {
         return checkExistence.postTest();
     }
 
+    @Transactional
     public AddPostResponse addPosts(AddPostRequest addPostRequest) throws Exception{
         try{
             if(addPostRequest.getPostType()!=PostType.IMAGE && addPostRequest.getPostType()!=PostType.LINK && addPostRequest.getPostType()!=PostType.TEXT &&
@@ -110,6 +117,7 @@ public class PostsService {
         }
     }
 
+    @Transactional
     public LikeResponse likePost(Integer userId, Integer postId) throws Exception {
         try{
             LikeResponse response = new LikeResponse();
@@ -151,6 +159,7 @@ public class PostsService {
         }
     }
 
+    @Transactional
     public DislikeResponse dislikePost(Integer userId, Integer postId) throws Exception{
         try{
             DislikeResponse response = new DislikeResponse();
@@ -181,6 +190,54 @@ public class PostsService {
             response.setPostId(savedPost.getPostId());
             response.setDislikeCount(savedPost.getDislikes());
             response.setUserId(user.getUserId());
+            return response;
+        }catch (Exception e){
+            log.error(e);
+            throw new Exception("Unable to dislike post because: "+e);
+        }
+    }
+
+    @Transactional
+    public PostCommentResponse postComment(PostCommentRequest postCommentRequest) throws Exception{
+        try{
+            UserTable user = checkExistence.checkUserExists(postCommentRequest.getUserId());
+            PostTable post;
+            CommentsTable comment;
+            CommentsTable newComment = new CommentsTable();
+            if(postCommentRequest.getPostId()!=null && postCommentRequest.getCommentId()!=null)
+                throw new Exception("Post id and comment id both exists, unable to distinguish which to save");
+            else if(postCommentRequest.getPostId()!=null) {
+                post = checkExistence.checkPostsExists(postCommentRequest.getPostId());
+                newComment.setPostId(post);
+
+            }
+            else if(postCommentRequest.getCommentId()!=null) {
+                comment = checkExistence.checkCommentExists(postCommentRequest.getCommentId());
+                newComment.setCommentLinkedTo(comment);
+            }
+            else
+                throw new Exception("Both post and comment id not present");
+            newComment.setDateAdded(new Date());
+            newComment.setUserId(user);
+            newComment.setLikes(1);
+            newComment.setDislikes(0);
+            newComment.setIsCommentBanned(false);
+            newComment.setBanReason(null);
+            newComment.setCommentText(postCommentRequest.getCommentData());
+            CommentsTable savedComment = commentRepo.save(newComment);
+            LikesTable newLike = new LikesTable();
+            newLike.setCommentId(savedComment);
+            newLike.setUserId(user);
+            newLike.setDateAdded(new Date());
+            LikesTable savedLike = likesRepo.save(newLike);
+            PostCommentResponse response;
+            if(postCommentRequest.getPostId()!=null) {
+                response = new PostCommentResponse(savedComment.getUserId().getUserId(), savedComment.getPostId().getPostId(),
+                        null, savedComment.getCommentsId(), savedComment.getCommentText(), savedLike.getLikesId());
+            }else{
+                response = new PostCommentResponse(savedComment.getUserId().getUserId(), null,
+                        savedComment.getCommentLinkedTo().getCommentsId(), savedComment.getCommentsId(), savedComment.getCommentText(), savedLike.getLikesId());
+            }
             return response;
         }catch (Exception e){
             log.error(e);

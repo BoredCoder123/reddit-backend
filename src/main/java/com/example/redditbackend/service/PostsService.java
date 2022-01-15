@@ -4,10 +4,7 @@ import com.example.redditbackend.entity.*;
 import com.example.redditbackend.repository.*;
 import com.example.redditbackend.request.AddPostRequest;
 import com.example.redditbackend.request.PostCommentRequest;
-import com.example.redditbackend.response.AddPostResponse;
-import com.example.redditbackend.response.DislikeResponse;
-import com.example.redditbackend.response.LikeResponse;
-import com.example.redditbackend.response.PostCommentResponse;
+import com.example.redditbackend.response.*;
 import com.example.redditbackend.utility.CheckExistence;
 import com.example.redditbackend.utility.PostType;
 import lombok.extern.log4j.Log4j2;
@@ -241,7 +238,83 @@ public class PostsService {
             return response;
         }catch (Exception e){
             log.error(e);
-            throw new Exception("Unable to dislike post because: "+e);
+            throw new Exception("Unable to post comment because: "+e);
+        }
+    }
+
+    @Transactional
+    public LikeResponse likeComment(Integer userId, Integer commentId) throws Exception {
+        try{
+            LikeResponse response = new LikeResponse();
+            UserTable user = checkExistence.checkUserExists(userId);
+            CommentsTable comment = checkExistence.checkCommentExists(commentId);
+            response.setUserId(user.getUserId());
+            response.setCommentId(comment.getCommentsId());
+
+            LikesTable like = likesRepo.findByCommentIdAndUserId(comment, user);
+            if(like==null){
+                LikesTable newLike = new LikesTable();
+                newLike.setCommentId(comment);
+                newLike.setDateAdded(new Date());
+                newLike.setUserId(user);
+                LikesTable savedLike = likesRepo.save(newLike);
+                response.setLikedAdded(savedLike.getLikesId());
+                DislikesTable dislike = dislikesRepo.findByCommentIdAndUserId(comment, user);
+                if(dislike!=null){
+                    dislikesRepo.delete(dislike);
+                    response.setDislikeDeleted(dislike.getDislikesId());
+                    comment.setDislikes(comment.getDislikes()-1);
+                }
+                comment.setLikes(comment.getLikes()+1);
+            }else{
+                likesRepo.delete(like);
+                response.setLikeRemoved(like.getLikesId());
+                comment.setLikes(comment.getLikes()-1);
+            }
+            CommentsTable savedComment = commentRepo.save(comment);
+            response.setLikeCount(savedComment.getLikes());
+            return response;
+        }catch (Exception e){
+            log.error(e);
+            throw new Exception("Unable to like comment because: "+e);
+        }
+    }
+
+    @Transactional
+    public DislikeResponse dislikeComment(Integer userId, Integer commentId) throws Exception{
+        try{
+            DislikeResponse response = new DislikeResponse();
+            UserTable user  = checkExistence.checkUserExists(userId);
+            CommentsTable comment = checkExistence.checkCommentExists(commentId);
+            response.setUserId(user.getUserId());
+            response.setCommentId(comment.getCommentsId());
+
+            DislikesTable dislike = dislikesRepo.findByCommentIdAndUserId(comment, user);
+            if(dislike == null){
+                DislikesTable newDislike = new DislikesTable();
+                newDislike.setCommentId(comment);
+                newDislike.setDateAdded(new Date());
+                newDislike.setUserId(user);
+                DislikesTable savedDislike = dislikesRepo.save(newDislike);
+                response.setDislikedAdded(savedDislike.getDislikesId());
+                LikesTable like = likesRepo.findByCommentIdAndUserId(comment, user);
+                if(like != null){
+                    likesRepo.delete(like);
+                    response.setLikeDeleted(like.getLikesId());
+                    comment.setLikes(comment.getLikes()+1);
+                }
+                comment.setDislikes(comment.getDislikes()+1);
+            }else{
+                dislikesRepo.delete(dislike);
+                response.setDislikeRemoved(dislike.getDislikesId());
+                comment.setDislikes(comment.getDislikes()-1);
+            }
+            CommentsTable savedComment = commentRepo.save(comment);
+            response.setDislikeCount(savedComment.getDislikes());
+            return response;
+        }catch (Exception e){
+            log.error(e);
+            throw new Exception("Unable to dislike comment because: "+e);
         }
     }
 }

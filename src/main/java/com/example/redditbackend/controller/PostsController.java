@@ -23,7 +23,7 @@ public class PostsController {
     }
 
     @PostMapping("/meme")
-    public ResponseEntity addPost(@RequestBody AddPostRequest addPostRequest){
+    public ResponseEntity<Object> addPost(@RequestBody AddPostRequest addPostRequest){
         try{
             return new ResponseEntity<>(postsService.addPosts(addPostRequest), HttpStatus.OK);
         }catch (Exception e){
@@ -33,32 +33,52 @@ public class PostsController {
     }
 
     @PostMapping("/like-post/{userId}/{postId}")
-    public ResponseEntity likePost(@PathVariable Integer userId, @PathVariable Integer postId){
+    public ResponseEntity<Object> likePost(@PathVariable Integer userId, @PathVariable Integer postId){
         try{
-            return new ResponseEntity(postsService.likePost(userId, postId), HttpStatus.OK);
+            return new ResponseEntity<>(postsService.likePost(userId, postId), HttpStatus.OK);
         }catch (Exception e){
             log.error(e);
-            return new ResponseEntity("Unable to like post", HttpStatus.CONFLICT);
+            return new ResponseEntity<>("Unable to like post", HttpStatus.CONFLICT);
         }
     }
 
     @PostMapping("dislike-post/{userId}/{postId}")
-    public ResponseEntity dislikePost(@PathVariable Integer userId, @PathVariable Integer postId){
+    public ResponseEntity<Object> dislikePost(@PathVariable Integer userId, @PathVariable Integer postId){
         try{
-            return new ResponseEntity(postsService.dislikePost(userId, postId), HttpStatus.OK);
+            return new ResponseEntity<>(postsService.dislikePost(userId, postId), HttpStatus.OK);
         }catch (Exception e){
             log.error(e);
-            return new ResponseEntity("Unable to dislike post", HttpStatus.CONFLICT);
+            return new ResponseEntity<>("Unable to dislike post", HttpStatus.CONFLICT);
         }
     }
 
     @PostMapping("/comment")
-    public ResponseEntity postComment(@RequestBody PostCommentRequest postCommentRequest){
+    public ResponseEntity<Object> postComment(@RequestBody PostCommentRequest postCommentRequest){
         try{
-            return new ResponseEntity(postsService.postComment(postCommentRequest), HttpStatus.OK);
+            return new ResponseEntity<>(postsService.postComment(postCommentRequest), HttpStatus.OK);
         }catch (Exception e){
             log.error(e);
-            return new ResponseEntity("Unable to post comment", HttpStatus.CONFLICT);
+            return new ResponseEntity<>("Unable to post comment", HttpStatus.CONFLICT);
+        }
+    }
+
+    @PostMapping("/like-comment/{userId}/{commentId}")
+    public ResponseEntity<Object> likeComment(@PathVariable Integer userId, @PathVariable Integer commentId){
+        try{
+            return new ResponseEntity<>(postsService.likeComment(userId, commentId), HttpStatus.OK);
+        }catch (Exception e){
+            log.error(e);
+            return new ResponseEntity<>("Unable to like comment", HttpStatus.CONFLICT);
+        }
+    }
+
+    @PostMapping("/dislike-comment/{userId}/{commentId}")
+    public ResponseEntity<Object> dislikeComment(@PathVariable Integer userId, @PathVariable Integer commentId){
+        try{
+            return new ResponseEntity<>(postsService.dislikeComment(userId, commentId), HttpStatus.OK);
+        }catch (Exception e){
+            log.error(e);
+            return new ResponseEntity<>("Unable to like comment", HttpStatus.CONFLICT);
         }
     }
 }

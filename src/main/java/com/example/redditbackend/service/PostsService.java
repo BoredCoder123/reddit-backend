@@ -5,14 +5,16 @@ import com.example.redditbackend.repository.*;
 import com.example.redditbackend.request.AddPostRequest;
 import com.example.redditbackend.request.PostCommentRequest;
 import com.example.redditbackend.response.*;
+import com.example.redditbackend.tempObjects.SinglePostComment;
 import com.example.redditbackend.utility.CheckExistence;
 import com.example.redditbackend.utility.PostType;
+import com.example.redditbackend.utility.Subtract2Times;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import javax.transaction.Transactional;
-import java.util.Date;
+import java.util.*;
 
 @Service
 @Log4j2
@@ -301,7 +303,7 @@ public class PostsService {
                 if(like != null){
                     likesRepo.delete(like);
                     response.setLikeDeleted(like.getLikesId());
-                    comment.setLikes(comment.getLikes()+1);
+                    comment.setLikes(comment.getLikes()-1);
                 }
                 comment.setDislikes(comment.getDislikes()+1);
             }else{
@@ -315,6 +317,79 @@ public class PostsService {
         }catch (Exception e){
             log.error(e);
             throw new Exception("Unable to dislike comment because: "+e);
+        }
+    }
+
+    public SinglePostResponse viewSinglePost(Integer userId, Integer postId) throws Exception {
+        try{
+            UserTable user = checkExistence.checkUserExists(userId);
+            PostTable post = checkExistence.checkPostsExists(postId);
+            SinglePostResponse response = new SinglePostResponse();
+            response.setUserPosted(post.getUserPosted().getUsername());
+            response.setPostType(post.getPostType());
+            if(post.getPostType()==PostType.IMAGE){
+                PostTypeImage image = imageRepo.findByPostId(post);
+                response.setPostTitle(image.getImageTitle());
+                response.setUrl(image.getUrl());
+                response.setImageSource(image.getImageSource());
+            }else if(post.getPostType()==PostType.LINK){
+                PostTypeLink link = linkRepo.findByPostId(post);
+                response.setPostTitle(link.getLinkTitle());
+                response.setLinkUrl(link.getLinkUrl());
+            }else if(post.getPostType()==PostType.TEXT){
+                PostTypeText text = textRepo.findByPostId(post);
+                response.setPostTitle(text.getTextTitle());
+                response.setTextDescription(text.getTextDescription());
+            }else if(post.getPostType()==PostType.VIDEO){
+                PostTypeVideo video = videoRepo.findByPostId(post);
+                response.setPostTitle(video.getVideoTitle());
+                response.setVideoUrl(video.getVideoUrl());
+            }else{
+                throw new Exception("Invalid post type");
+            }
+            response.setIsUserOp(user.getUserId().equals(post.getUserPosted().getUserId()));
+            response.setWhenPosted(Subtract2Times.subtract2Times(post.getPostDate()));
+            response.setLikes(post.getLikes());
+            response.setDislikes(post.getDislikes());
+            LikesTable like = likesRepo.findByPostIdAndUserId(post, user);
+            response.setIsLiked(like != null);
+            DislikesTable dislike = dislikesRepo.findByPostIdAndUserId(post, user);
+            response.setIsDisliked(dislike!=null);
+            List<CommentsTable> firstLayerComments = commentRepo.findByPostId(post);
+            if(firstLayerComments.size()==0)
+                response.setComments(null);
+            else {
+                List<SinglePostComment> comments = new ArrayList<>();
+                for (CommentsTable c : firstLayerComments) {
+                    SinglePostComment newComment = new SinglePostComment(c.getCommentText(), c.getUserId().getUserId().equals(user.getUserId()),
+                            c.getUserId().getUsername(), Subtract2Times.subtract2Times(c.getDateAdded()), c.getLikes(), c.getDislikes());
+                    comments.add(newComment);
+                }
+                response.setComments(comments);
+            }
+            //Todo linked comments
+//            List<SinglePostComment> listOfComments = new ArrayList<>();
+//            HashSet<CommentsTable> firstLayerComment = new HashSet<>();
+//            Stack<CommentsTable> commentStack = new Stack<>();
+//            if(firstLayerComments.size()==0)
+//                response.setComments(null);
+//            else{
+//                for(CommentsTable c: firstLayerComments){
+//                    commentStack.push(c);
+//                    firstLayerComment.add(c);
+//                }
+//                while(!commentStack.isEmpty()){
+//                    CommentsTable poppedComment = commentStack.pop();
+//                    SinglePostComment temp = new SinglePostComment(poppedComment.getCommentText(), poppedComment.getUserId().getUserId().equals(user.getUserId()),
+//                            poppedComment.getUserId().getUsername(), Subtract2Times.subtract2Times(poppedComment.getDateAdded()),
+//                            poppedComment.getLikes(), poppedComment.getDislikes(), null);
+//                }
+//                response.setComments(listOfComments);
+//            }
+            return response;
+        }catch (Exception e){
+            log.error(e);
+            throw new Exception("Unable to show single post due to: "+e);
         }
     }
 }

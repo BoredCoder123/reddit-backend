@@ -78,7 +78,17 @@ public class PostsController {
             return new ResponseEntity<>(postsService.dislikeComment(userId, commentId), HttpStatus.OK);
         }catch (Exception e){
             log.error(e);
-            return new ResponseEntity<>("Unable to like comment", HttpStatus.CONFLICT);
+            return new ResponseEntity<>("Unable to dislike comment", HttpStatus.CONFLICT);
+        }
+    }
+
+    @GetMapping("/single-post/{userId}/{postId}")
+    public ResponseEntity<Object> viewSinglePost(@PathVariable Integer userId, @PathVariable Integer postId){
+        try{
+            return new ResponseEntity<>(postsService.viewSinglePost(userId, postId), HttpStatus.OK);
+        }catch (Exception e){
+            log.error(e);
+            return new ResponseEntity<>("Unable to view post", HttpStatus.CONFLICT);
         }
     }
 }

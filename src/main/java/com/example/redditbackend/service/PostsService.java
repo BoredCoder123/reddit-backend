@@ -5,8 +5,10 @@ import com.example.redditbackend.repository.*;
 import com.example.redditbackend.request.AddPostRequest;
 import com.example.redditbackend.request.PostCommentRequest;
 import com.example.redditbackend.response.*;
+import com.example.redditbackend.tempObjects.DashboardItem;
 import com.example.redditbackend.tempObjects.SinglePostComment;
 import com.example.redditbackend.utility.CheckExistence;
+import com.example.redditbackend.utility.Constants;
 import com.example.redditbackend.utility.PostType;
 import com.example.redditbackend.utility.Subtract2Times;
 import lombok.extern.log4j.Log4j2;
@@ -390,6 +392,66 @@ public class PostsService {
         }catch (Exception e){
             log.error(e);
             throw new Exception("Unable to show single post due to: "+e);
+        }
+    }
+
+    public DashboardResponse viewDashboard(Integer userId, String view, Integer pageNumber) throws Exception{
+        try{
+            DashboardResponse response = new DashboardResponse();
+            UserTable user = checkExistence.checkUserExists(userId);
+            response.setUserId(user.getUserId());
+            response.setUsername(user.getUsername());
+            int start = (pageNumber-1) * Constants.postsPerPage, end = pageNumber * Constants.postsPerPage;
+            List<PostTable> dataFromDb;
+            if(view.equals("top-all-time"))
+                dataFromDb =  postRepo.findTopViewOfAllTime(start, end);
+            else
+                throw new Exception("Invalid fetch type");
+            List<DashboardItem> posts = new ArrayList<>();
+            if(dataFromDb.size()==0)
+                return response;
+            for(PostTable p : dataFromDb){
+                DashboardItem item = new DashboardItem();
+                item.setPostId(p.getPostId());
+                item.setUserPosted(p.getUserPosted().getUsername());
+                item.setIsUserOp(p.getUserPosted().getUserId().equals(userId));
+                item.setLikes(p.getLikes());
+                item.setDislikes(p.getDislikes());
+                List<Object> getCounts = commentRepo.findCountOfComments(p.getPostId());
+                item.setComments(Integer.parseInt(getCounts.get(0).toString()));
+                LikesTable isLiked = likesRepo.findByPostIdAndUserId(p, user);
+                if(isLiked !=null){
+                    item.setHasUserLiked(true);
+                }else{
+                    item.setHasUserLiked(false);
+                    DislikesTable isDisliked = dislikesRepo.findByPostIdAndUserId(p, user);
+                    item.setHasUserDisliked(isDisliked != null);
+                }
+                if(p.getPostType()==PostType.TEXT){
+                    PostTypeText text = textRepo.findByPostId(p);
+                    item.setPostTitle(text.getTextTitle());
+                    item.setTextDescription(text.getTextDescription());
+                }else if(p.getPostType()==PostType.IMAGE){
+                    PostTypeImage image = imageRepo.findByPostId(p);
+                    item.setPostTitle(image.getImageTitle());
+                    item.setUrl(image.getUrl());
+                    item.setImageSource(image.getImageSource());
+                }else if(p.getPostType()==PostType.LINK){
+                    PostTypeLink link = linkRepo.findByPostId(p);
+                    item.setPostTitle(link.getLinkTitle());
+                    item.setLinkUrl(link.getLinkUrl());
+                }else if(p.getPostType()==PostType.VIDEO){
+                    PostTypeVideo video = videoRepo.findByPostId(p);
+                    item.setPostTitle(video.getVideoTitle());
+                    item.setVideoUrl(video.getVideoUrl());
+                }
+                posts.add(item);
+            }
+            response.setPosts(posts);
+            return response;
+        }catch (Exception e){
+            log.error(e);
+            throw new Exception("Unable to view dashboard because: "+e);
         }
     }
 }

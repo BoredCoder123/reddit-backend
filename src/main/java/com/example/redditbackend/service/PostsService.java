@@ -404,7 +404,9 @@ public class PostsService {
             int start = (pageNumber-1) * Constants.postsPerPage, end = pageNumber * Constants.postsPerPage;
             List<PostTable> dataFromDb;
             if(view.equals("top-all-time"))
-                dataFromDb =  postRepo.findTopViewOfAllTime(start, end);
+                dataFromDb = postRepo.findTopViewOfAllTime(start, end);
+            else if(view.equals("top-today"))
+                dataFromDb = postRepo.findTopToday(start, end);
             else
                 throw new Exception("Invalid fetch type");
             List<DashboardItem> posts = new ArrayList<>();

@@ -93,9 +93,19 @@ public class PostsController {
     }
 
     @GetMapping("/dashboard/top-all-time/{userId}/{pageNumber}")
-    public ResponseEntity<Object> viewDashBoardTop(@PathVariable Integer userId, @PathVariable Integer pageNumber){
+    public ResponseEntity<Object> viewDashBoardTopAllTime(@PathVariable Integer userId, @PathVariable Integer pageNumber){
         try{
             return new ResponseEntity<>(postsService.viewDashboard(userId, "top-all-time", pageNumber), HttpStatus.OK);
+        }catch (Exception e){
+            log.error(e);
+            return new ResponseEntity<>("Unable to fetch top posts", HttpStatus.CONFLICT);
+        }
+    }
+
+    @GetMapping("/dashboard/top-today/{userId}/{pageNumber}")
+    public ResponseEntity<Object> viewDashBoardTopToday(@PathVariable Integer userId, @PathVariable Integer pageNumber){
+        try{
+            return new ResponseEntity<>(postsService.viewDashboard(userId, "top-today", pageNumber), HttpStatus.OK);
         }catch (Exception e){
             log.error(e);
             return new ResponseEntity<>("Unable to fetch top posts", HttpStatus.CONFLICT);

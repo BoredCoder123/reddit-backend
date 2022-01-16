@@ -407,6 +407,8 @@ public class PostsService {
                 dataFromDb = postRepo.findTopViewOfAllTime(start, end);
             else if(view.equals("top-today"))
                 dataFromDb = postRepo.findTopToday(start, end);
+            else if(view.equals("new"))
+                dataFromDb = postRepo.findNew(start, end);
             else
                 throw new Exception("Invalid fetch type");
             List<DashboardItem> posts = new ArrayList<>();

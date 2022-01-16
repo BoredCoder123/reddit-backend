@@ -111,4 +111,14 @@ public class PostsController {
             return new ResponseEntity<>("Unable to fetch top posts", HttpStatus.CONFLICT);
         }
     }
+
+    @GetMapping("/dashboard/new/{userId}/{pageNumber}")
+    public ResponseEntity<Object> viewDashBoardNew(@PathVariable Integer userId, @PathVariable Integer pageNumber){
+        try{
+            return new ResponseEntity<>(postsService.viewDashboard(userId, "new", pageNumber), HttpStatus.OK);
+        }catch (Exception e){
+            log.error(e);
+            return new ResponseEntity<>("Unable to fetch top posts", HttpStatus.CONFLICT);
+        }
+    }
 }

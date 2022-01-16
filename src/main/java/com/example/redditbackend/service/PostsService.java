@@ -322,6 +322,7 @@ public class PostsService {
         }
     }
 
+    @Transactional
     public SinglePostResponse viewSinglePost(Integer userId, Integer postId) throws Exception {
         try{
             UserTable user = checkExistence.checkUserExists(userId);
@@ -395,6 +396,7 @@ public class PostsService {
         }
     }
 
+    @Transactional
     public DashboardResponse viewDashboard(Integer userId, String view, Integer pageNumber) throws Exception{
         try{
             DashboardResponse response = new DashboardResponse();
@@ -463,6 +465,69 @@ public class PostsService {
         }catch (Exception e){
             log.error(e);
             throw new Exception("Unable to view dashboard because: "+e);
+        }
+    }
+
+    @Transactional
+    public DeletePostResponse deletePost(Integer userId, Integer postId) throws Exception {
+        try{
+            DeletePostResponse response = new DeletePostResponse();
+            UserTable user = checkExistence.checkUserExists(userId);
+            PostTable post = checkExistence.checkPostsExists(postId);
+            if(!post.getUserPosted().getUserId().equals(user.getUserId()))
+                throw new Exception("User is not the owner");
+            response.setPostDeleted(post.getPostId());
+            response.setUserWhichDeleted(user.getUserId());
+            switch (post.getPostType()){
+                case LINK:
+                    PostTypeLink link = linkRepo.findByPostId(post);
+                    linkRepo.delete(link);
+                    response.setLinkDeleted(link.getLinkId());
+                    break;
+                case TEXT:
+                    PostTypeText text = textRepo.findByPostId(post);
+                    textRepo.delete(text);
+                    response.setTextDeleted(text.getTextId());
+                    break;
+                case IMAGE:
+                    PostTypeImage image = imageRepo.findByPostId(post);
+                    imageRepo.delete(image);
+                    response.setImageDeleted(image.getImageId());
+                    break;
+                case VIDEO:
+                    PostTypeVideo video = videoRepo.findByPostId(post);
+                    videoRepo.delete(video);
+                    response.setVideoDeleted(video.getVideoId());
+                    break;
+                default:
+                    throw new Exception("Invalid post type");
+            }
+            List<Integer> commentsList = new ArrayList<>();
+            List<Integer> likesList = new ArrayList<>();
+            List<Integer> dislikesList = new ArrayList<>();
+            List<CommentsTable> commentsToBeDeleted = commentRepo.findByPostId(post);
+            for(CommentsTable c : commentsToBeDeleted){
+                commentRepo.delete(c);
+                commentsList.add(c.getCommentsId());
+            }
+            List<LikesTable> likesToBeDeleted = likesRepo.findByPostId(post);
+            for(LikesTable l : likesToBeDeleted){
+                likesList.add(l.getLikesId());
+                likesRepo.delete(l);
+            }
+            List<DislikesTable> dislikesToBeDeleted = dislikesRepo.findByPostId(post);
+            for(DislikesTable d : dislikesToBeDeleted){
+                dislikesRepo.delete(d);
+                dislikesList.add(d.getDislikesId());
+            }
+            response.setCommentsDeleted(commentsList);
+            response.setLikesDeleted(likesList);
+            response.setDislikesDeleted(dislikesList);
+            postRepo.delete(post);
+            return response;
+        }catch (Exception e){
+            log.error(e);
+            throw new Exception("Unable to delete post because: "+e);
         }
     }
 }

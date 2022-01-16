@@ -122,5 +122,14 @@ public class PostsController {
         }
     }
 
+    @PostMapping("/delete-post/{userId}/{postId}")
+    public ResponseEntity<Object> deletePost(@PathVariable Integer userId, @PathVariable Integer postId){
+        try{
+            return new ResponseEntity<>(postsService.deletePost(userId, postId), HttpStatus.OK);
+        }catch (Exception e){
+            log.error(e);
+            return new ResponseEntity<>("Unable to delete post", HttpStatus.CONFLICT);
+        }
+    }
     //delete post, update post, ban post, delete comment, update comment, view own history
 }

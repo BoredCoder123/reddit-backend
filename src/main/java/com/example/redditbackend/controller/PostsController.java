@@ -121,4 +121,6 @@ public class PostsController {
             return new ResponseEntity<>("Unable to fetch top posts", HttpStatus.CONFLICT);
         }
     }
+
+    //delete post, update post, ban post, delete comment, update comment, view own history
 }

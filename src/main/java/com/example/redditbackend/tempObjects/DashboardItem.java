@@ -12,6 +12,8 @@ import lombok.Setter;
 public class DashboardItem {
     private Integer postId;
     private String postTitle;
+    private Integer communityId;
+    private String communityName;
     private String userPosted;
     private Boolean isUserOp;
     private Integer likes;

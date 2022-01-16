@@ -403,14 +403,19 @@ public class PostsService {
             response.setUsername(user.getUsername());
             int start = (pageNumber-1) * Constants.postsPerPage, end = pageNumber * Constants.postsPerPage;
             List<PostTable> dataFromDb;
-            if(view.equals("top-all-time"))
-                dataFromDb = postRepo.findTopViewOfAllTime(start, end);
-            else if(view.equals("top-today"))
-                dataFromDb = postRepo.findTopToday(start, end);
-            else if(view.equals("new"))
-                dataFromDb = postRepo.findNew(start, end);
-            else
-                throw new Exception("Invalid fetch type");
+            switch (view) {
+                case "top-all-time":
+                    dataFromDb = postRepo.findTopViewOfAllTime(start, end);
+                    break;
+                case "top-today":
+                    dataFromDb = postRepo.findTopToday(start, end);
+                    break;
+                case "new":
+                    dataFromDb = postRepo.findNew(start, end);
+                    break;
+                default:
+                    throw new Exception("Invalid fetch type");
+            }
             List<DashboardItem> posts = new ArrayList<>();
             if(dataFromDb.size()==0)
                 return response;
@@ -421,6 +426,8 @@ public class PostsService {
                 item.setIsUserOp(p.getUserPosted().getUserId().equals(userId));
                 item.setLikes(p.getLikes());
                 item.setDislikes(p.getDislikes());
+                item.setCommunityId(p.getCommunityId().getCommunityId());
+                item.setCommunityName(p.getCommunityId().getCommunityName());
                 List<Object> getCounts = commentRepo.findCountOfComments(p.getPostId());
                 item.setComments(Integer.parseInt(getCounts.get(0).toString()));
                 LikesTable isLiked = likesRepo.findByPostIdAndUserId(p, user);

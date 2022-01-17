@@ -5,6 +5,7 @@ import com.example.redditbackend.repository.*;
 import com.example.redditbackend.request.AddPostRequest;
 import com.example.redditbackend.request.BanPostRequest;
 import com.example.redditbackend.request.PostCommentRequest;
+import com.example.redditbackend.request.UpdateCommentRequest;
 import com.example.redditbackend.response.*;
 import com.example.redditbackend.tempObjects.DashboardItem;
 import com.example.redditbackend.tempObjects.SinglePostComment;
@@ -588,6 +589,23 @@ public class PostsService {
         }catch (Exception e){
             log.error(e);
             throw new Exception("Unable to delete comment because: "+e);
+        }
+    }
+
+    public UpdateCommentResponse updateComment(UpdateCommentRequest updateCommentRequest) throws Exception {
+        try{
+            UserTable user = checkExistence.checkUserExists(updateCommentRequest.getUserId());
+            CommentsTable comment = checkExistence.checkCommentExists(updateCommentRequest.getCommentId());
+            if(!comment.getUserId().getUserId().equals(user.getUserId()))
+                throw new Exception("User doesn't have permission to update the comment");
+            comment.setCommentText(updateCommentRequest.getCommentString());
+            CommentsTable savedComment = commentRepo.save(comment);
+            UpdateCommentResponse response = new UpdateCommentResponse(savedComment.getUserId().getUserId(), comment.getCommentsId(), comment.getUserId().getUsername(),
+                    comment.getCommentText(), comment.getPostId().getPostId());
+            return response;
+        }catch (Exception e){
+            log.error(e);
+            throw new Exception("Unable to update comment because: "+e);
         }
     }
 }

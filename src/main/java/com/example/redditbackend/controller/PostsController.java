@@ -4,6 +4,7 @@ import com.example.redditbackend.entity.UserTable;
 import com.example.redditbackend.request.AddPostRequest;
 import com.example.redditbackend.request.BanPostRequest;
 import com.example.redditbackend.request.PostCommentRequest;
+import com.example.redditbackend.request.UpdateCommentRequest;
 import com.example.redditbackend.service.PostsService;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -152,5 +153,15 @@ public class PostsController {
             return new ResponseEntity<>("Unable to delete comment", HttpStatus.CONFLICT);
         }
     }
-    //update post, delete comment, update comment, view own history
+
+    @PostMapping("/update-comment")
+    public ResponseEntity<Object> updateComment(@RequestBody UpdateCommentRequest updateCommentRequest){
+        try{
+            return new ResponseEntity<>(postsService.updateComment(updateCommentRequest), HttpStatus.OK);
+        }catch (Exception e){
+            log.error(e);
+            return new ResponseEntity<>("Unable to update comment", HttpStatus.CONFLICT);
+        }
+    }
+    //update post, update comment, view own history
 }

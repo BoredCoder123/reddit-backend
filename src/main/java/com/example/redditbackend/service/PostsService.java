@@ -561,4 +561,33 @@ public class PostsService {
             throw new Exception("Unable to ban post because: "+e);
         }
     }
+
+    public DeleteCommentResponse deleteComment(Integer userId, Integer commentId) throws Exception {
+        try{
+            UserTable user = checkExistence.checkUserExists(userId);
+            CommentsTable comment = checkExistence.checkCommentExists(commentId);
+            if(!comment.getUserId().getUserId().equals(user.getUserId()))
+                throw new Exception("User doesn't have enough permission to delete the comment");
+            PostTable post = comment.getPostId();
+            List<Integer> likeList = new ArrayList<>();
+            List<LikesTable> likesFromDb = likesRepo.findByCommentId(comment);
+            for(LikesTable l : likesFromDb){
+                likesRepo.delete(l);
+                likeList.add(l.getLikesId());
+            }
+            List<Integer> dislikeList = new ArrayList<>();
+            List<DislikesTable> dislikesFromDb = dislikesRepo.findByCommentId(comment);
+            for(DislikesTable d : dislikesFromDb){
+                dislikesRepo.delete(d);
+                likeList.add(d.getDislikesId());
+            }
+            commentRepo.delete(comment);
+            DeleteCommentResponse response = new DeleteCommentResponse(comment.getUserId().getUserId(), comment.getUserId().getUsername(), post.getPostId(),
+                    comment.getCommentsId(), likeList, dislikeList);
+            return response;
+        }catch (Exception e){
+            log.error(e);
+            throw new Exception("Unable to delete comment because: "+e);
+        }
+    }
 }

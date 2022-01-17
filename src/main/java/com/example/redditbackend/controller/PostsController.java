@@ -142,5 +142,15 @@ public class PostsController {
             return new ResponseEntity<>("Unable to ban post", HttpStatus.CONFLICT);
         }
     }
+
+    @PostMapping("/delete-comment/{userId}/{commentId}")
+    public ResponseEntity<Object> deleteComment(@PathVariable Integer userId, @PathVariable Integer commentId){
+        try{
+            return new ResponseEntity<>(postsService.deleteComment(userId, commentId), HttpStatus.OK);
+        }catch (Exception e){
+            log.error(e);
+            return new ResponseEntity<>("Unable to delete comment", HttpStatus.CONFLICT);
+        }
+    }
     //update post, delete comment, update comment, view own history
 }

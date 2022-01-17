@@ -13,4 +13,6 @@ public interface LikesTableRepository extends JpaRepository<LikesTable, Integer>
     public LikesTable findByCommentIdAndUserId(CommentsTable commentId, UserTable userId);
 
     List<LikesTable> findByPostId(PostTable post);
+
+    List<LikesTable> findByCommentId(CommentsTable comment);
 }

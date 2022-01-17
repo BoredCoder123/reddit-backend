@@ -9,4 +9,6 @@ public interface DislikesTableRepository extends JpaRepository<DislikesTable, In
     public DislikesTable findByPostIdAndUserId(PostTable postId, UserTable userId);
     public DislikesTable findByCommentIdAndUserId(CommentsTable commentId, UserTable userId);
     List<DislikesTable> findByPostId(PostTable post);
+
+    List<DislikesTable> findByCommentId(CommentsTable comment);
 }

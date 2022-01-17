@@ -1,10 +1,7 @@
 package com.example.redditbackend.controller;
 
 import com.example.redditbackend.entity.UserTable;
-import com.example.redditbackend.request.AddPostRequest;
-import com.example.redditbackend.request.BanPostRequest;
-import com.example.redditbackend.request.PostCommentRequest;
-import com.example.redditbackend.request.UpdateCommentRequest;
+import com.example.redditbackend.request.*;
 import com.example.redditbackend.service.PostsService;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -163,5 +160,15 @@ public class PostsController {
             return new ResponseEntity<>("Unable to update comment", HttpStatus.CONFLICT);
         }
     }
-    //update post, update comment, view own history
+
+    @PostMapping("/update-post")
+    public ResponseEntity<Object> updatePost(@RequestBody UpdatePostRequest updatePostRequest){
+        try{
+            return new ResponseEntity<>(postsService.updatePost(updatePostRequest), HttpStatus.OK);
+        }catch (Exception e){
+            log.error(e);
+            return new ResponseEntity<>("Unable to update post", HttpStatus.CONFLICT);
+        }
+    }
+    //ban comment, view own history
 }

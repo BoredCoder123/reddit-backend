@@ -2,10 +2,7 @@ package com.example.redditbackend.service;
 
 import com.example.redditbackend.entity.*;
 import com.example.redditbackend.repository.*;
-import com.example.redditbackend.request.AddPostRequest;
-import com.example.redditbackend.request.BanPostRequest;
-import com.example.redditbackend.request.PostCommentRequest;
-import com.example.redditbackend.request.UpdateCommentRequest;
+import com.example.redditbackend.request.*;
 import com.example.redditbackend.response.*;
 import com.example.redditbackend.tempObjects.DashboardItem;
 import com.example.redditbackend.tempObjects.SinglePostComment;
@@ -606,6 +603,57 @@ public class PostsService {
         }catch (Exception e){
             log.error(e);
             throw new Exception("Unable to update comment because: "+e);
+        }
+    }
+
+    public UpdatePostResponse updatePost(UpdatePostRequest updatePostRequest) throws Exception {
+        try{
+            UpdatePostResponse response = new UpdatePostResponse();
+            UserTable user = checkExistence.checkUserExists(updatePostRequest.getUserId());
+            response.setUserId(user.getUserId());
+            PostTable post = checkExistence.checkPostsExists(updatePostRequest.getPostId());
+            response.setPostId(post.getPostId());
+            if(!post.getUserPosted().getUserId().equals(user.getUserId()))
+                throw new Exception("User doesn't have enough permissions to update the post");
+            if(post.getPostType()==PostType.IMAGE){
+                PostTypeImage image = imageRepo.findByPostId(post);
+                image.setImageTitle(updatePostRequest.getPostTitle());
+                image.setImageSource(updatePostRequest.getImageSource());
+                image.setUrl(updatePostRequest.getImageUrl());
+                PostTypeImage savedImage = imageRepo.save(image);
+                response.setPostTitle(savedImage.getImageTitle());
+                response.setImageId(savedImage.getImageId());
+                response.setImageSource(savedImage.getImageSource());
+                response.setImageUrl(savedImage.getUrl());
+            }else if(post.getPostType() == PostType.LINK){
+                PostTypeLink link = linkRepo.findByPostId(post);
+                link.setLinkTitle(updatePostRequest.getPostTitle());
+                link.setLinkUrl(updatePostRequest.getLinkUrl());
+                PostTypeLink savedLink = linkRepo.save(link);
+                response.setPostTitle(savedLink.getLinkTitle());
+                response.setLinkId(savedLink.getLinkId());
+                response.setLinkUrl(savedLink.getLinkUrl());
+            }else if(post.getPostType() == PostType.TEXT){
+                PostTypeText text = textRepo.findByPostId(post);
+                text.setTextTitle(updatePostRequest.getPostTitle());
+                text.setTextDescription(updatePostRequest.getTextDescription());
+                PostTypeText savedText = textRepo.save(text);
+                response.setTextId(savedText.getTextId());
+                response.setPostTitle(savedText.getTextTitle());
+                response.setTextDescription(savedText.getTextDescription());
+            }else if(post.getPostType() == PostType.VIDEO){
+                PostTypeVideo video = videoRepo.findByPostId(post);
+                video.setVideoTitle(updatePostRequest.getPostTitle());
+                video.setVideoUrl(updatePostRequest.getVideoUrl());
+                PostTypeVideo savedVideo = videoRepo.save(video);
+                response.setVideoId(savedVideo.getVideoId());
+                response.setPostTitle(savedVideo.getVideoTitle());
+                response.setVideoUrl(savedVideo.getVideoUrl());
+            }
+            return response;
+        }catch (Exception e){
+            log.error(e);
+            throw new Exception("Unable to update post because: "+e);
         }
     }
 }

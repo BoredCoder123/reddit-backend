@@ -24,6 +24,12 @@ public class CheckExistence {
     @Autowired
     private CommentsTableRepository commentRepo;
 
+    @Autowired
+    private ModUserCommunityTableRepository modRepo;
+
+    @Autowired
+    private CoOwnerUserCommunityTableRepository coRepo;
+
     public UserTable postTest(){
         return userRepo.findByUsername("test1");
     }
@@ -63,5 +69,15 @@ public class CheckExistence {
         if(!checkComment.isPresent())
             throw new Exception("Unable to find comment");
         return checkComment.get();
+    }
+
+    public Boolean checkIfUserIsModCoOrOwner(UserTable user, CommunityTable community){
+        if(community.getCurrentOwner().getUserId().equals(user.getUserId()))
+            return true;
+        ModUserCommunityTable currentMod = modRepo.findByCommunityTableAndUserId(community, user);
+        if(currentMod != null)
+            return true;
+        CoOwnerUserCommunityTable currentCo = coRepo.findByUserIdAndCommunityId(user, community);
+        return currentCo != null;
     }
 }

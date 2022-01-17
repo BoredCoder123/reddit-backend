@@ -47,6 +47,13 @@ public class PostTable {
     @Column(name="ban_reason")
     private String banReason;
 
+    @ManyToOne
+    @JoinColumn(name = "banned_by")
+    private UserTable bannedBy;
+
+    @Column(name = "ban_date")
+    private Date banDate;
+
     public PostTable(UserTable userPosted, CommunityTable communityId, Date postDate, PostType postType, Integer likes, Integer dislikes, Boolean isPostBanned) {
         this.userPosted = userPosted;
         this.communityId = communityId;

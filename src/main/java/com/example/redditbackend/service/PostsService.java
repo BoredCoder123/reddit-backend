@@ -3,6 +3,7 @@ package com.example.redditbackend.service;
 import com.example.redditbackend.entity.*;
 import com.example.redditbackend.repository.*;
 import com.example.redditbackend.request.AddPostRequest;
+import com.example.redditbackend.request.BanPostRequest;
 import com.example.redditbackend.request.PostCommentRequest;
 import com.example.redditbackend.response.*;
 import com.example.redditbackend.tempObjects.DashboardItem;
@@ -528,6 +529,36 @@ public class PostsService {
         }catch (Exception e){
             log.error(e);
             throw new Exception("Unable to delete post because: "+e);
+        }
+    }
+
+    public BanPostResponse banPost(BanPostRequest banPostRequest) throws Exception{
+        try{
+            BanPostResponse response = new BanPostResponse();
+            UserTable user = checkExistence.checkUserExists(banPostRequest.getBannerId());
+            response.setBannedBy(user.getUserId());
+            response.setBanningUsername(user.getUsername());
+            PostTable post = checkExistence.checkPostsExists(banPostRequest.getPostId());
+            if(post.getIsPostBanned())
+                throw new Exception("Post is already banned");
+            if(!checkExistence.checkIfUserIsModCoOrOwner(user, post.getCommunityId()))
+                throw new Exception("Not enough permission to ban the post");
+            post.setIsPostBanned(true);
+            post.setBanDate(new Date());
+            post.setBannedBy(user);
+            post.setBanReason(banPostRequest.getBanReason());
+            PostTable savedPost = postRepo.save(post);
+            response.setPostId(savedPost.getPostId());
+            response.setPostType(savedPost.getPostType());
+            response.setCommunityPostedIn(savedPost.getCommunityId().getCommunityId());
+            response.setCommunityName(savedPost.getCommunityId().getCommunityName());
+            response.setBanReason(banPostRequest.getBanReason());
+            response.setPostPostedBy(savedPost.getUserPosted().getUserId());
+            response.setPostedUsername(savedPost.getUserPosted().getUsername());
+            return response;
+        }catch (Exception e){
+            log.error(e);
+            throw new Exception("Unable to ban post because: "+e);
         }
     }
 }

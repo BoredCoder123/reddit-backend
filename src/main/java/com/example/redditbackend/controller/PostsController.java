@@ -2,6 +2,7 @@ package com.example.redditbackend.controller;
 
 import com.example.redditbackend.entity.UserTable;
 import com.example.redditbackend.request.AddPostRequest;
+import com.example.redditbackend.request.BanPostRequest;
 import com.example.redditbackend.request.PostCommentRequest;
 import com.example.redditbackend.service.PostsService;
 import lombok.extern.log4j.Log4j2;
@@ -131,5 +132,15 @@ public class PostsController {
             return new ResponseEntity<>("Unable to delete post", HttpStatus.CONFLICT);
         }
     }
-    //delete post, update post, ban post, delete comment, update comment, view own history
+
+    @PostMapping("/ban-post")
+    public ResponseEntity<Object> banPost(@RequestBody BanPostRequest banPostRequest){
+        try{
+            return new ResponseEntity<>(postsService.banPost(banPostRequest), HttpStatus.OK);
+        }catch (Exception e){
+            log.error(e);
+            return new ResponseEntity<>("Unable to ban post", HttpStatus.CONFLICT);
+        }
+    }
+    //update post, delete comment, update comment, view own history
 }

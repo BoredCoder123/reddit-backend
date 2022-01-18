@@ -4,8 +4,7 @@ import com.example.redditbackend.entity.*;
 import com.example.redditbackend.repository.*;
 import com.example.redditbackend.request.*;
 import com.example.redditbackend.response.*;
-import com.example.redditbackend.tempObjects.DashboardItem;
-import com.example.redditbackend.tempObjects.SinglePostComment;
+import com.example.redditbackend.tempObjects.*;
 import com.example.redditbackend.utility.CheckExistence;
 import com.example.redditbackend.utility.Constants;
 import com.example.redditbackend.utility.PostType;
@@ -47,6 +46,9 @@ public class PostsService {
 
     @Autowired
     private CommentsTableRepository commentRepo;
+
+    @Autowired
+    private CommunityTableRepository communityRepo;
 
     public UserTable testPosts() {
         return checkExistence.postTest();
@@ -656,4 +658,30 @@ public class PostsService {
             throw new Exception("Unable to update post because: "+e);
         }
     }
+//      TODO view full history
+//    public ViewFullHistoryResponse viewFullHistory(Integer userId) throws Exception {
+//        try {
+//            ViewFullHistoryResponse response = new ViewFullHistoryResponse();
+//            UserTable user = checkExistence.checkUserExists(userId);
+//            response.setUserId(user.getUserId());
+//            response.setUserName(user.getUsername());
+//            response.setUserCreatedOn(user.getJoinDate());
+//            List<CommunityCreated> communitiesCreated;
+//            List<CommunityTable> communitiesCreatedFromDb = communityRepo.findByCreatorId(user);
+//
+//            List<CommunityJoined> communityJoined;
+//            List<CommunityModIn> communityModIn;
+//            List<CommunityCoOwnerIn> communityCoOwnerIn;
+//            List<PostsMade> postsMade;
+//            List<PostsLiked> postsLiked;
+//            List<PostsDisliked> postsDisliked;
+//            List<CommentsMade> commentsMade;
+//            List<CommentsLiked> commentsLiked;
+//            List<CommentsDisliked> commentsDisliked;
+//            return response;
+//        }catch (Exception e){
+//            log.error(e);
+//            throw new Exception("Unable to view full history because: "+e);
+//        }
+//    }
 }

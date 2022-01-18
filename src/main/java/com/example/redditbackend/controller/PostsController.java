@@ -170,5 +170,14 @@ public class PostsController {
             return new ResponseEntity<>("Unable to update post", HttpStatus.CONFLICT);
         }
     }
-    //ban comment, view own history
+
+//    @GetMapping("/full-history/{userId}")
+//    public ResponseEntity<Object> viewFullHistory(@PathVariable Integer userId){
+//        try{
+//            return new ResponseEntity<>(postsService.viewFullHistory(userId), HttpStatus.OK);
+//        }catch (Exception e){
+//            log.error(e);
+//            return new ResponseEntity<>("Unable to fetch history", HttpStatus.CONFLICT);
+//        }
+//    }
 }

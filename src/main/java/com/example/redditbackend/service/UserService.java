@@ -7,9 +7,6 @@ import com.example.redditbackend.response.*;
 import com.example.redditbackend.utility.SHA256;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.core.userdetails.User;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.stereotype.Service;
 
 import javax.transaction.Transactional;
@@ -17,7 +14,7 @@ import java.util.*;
 
 @Service
 @Log4j2
-public class UserService implements UserDetailsService {
+public class UserService {
     @Autowired
     protected UserTableRepository userRepo;
 
@@ -36,7 +33,6 @@ public class UserService implements UserDetailsService {
     @Transactional
     public RegisterResponse register(RegisterRequest registerRequest) throws Exception{
         try{
-            log.info("service register");
             UserTable checkExistingUser = userRepo.findByEmail(registerRequest.getEmail());
             if(checkExistingUser != null)
                 throw new Exception("User with email "+registerRequest.getEmail()+" already exists");
@@ -66,20 +62,12 @@ public class UserService implements UserDetailsService {
                 throw new Exception("Unable to find username");
             String hashedPassword = SHA256.toHexString(SHA256.getSHA(loginRequest.getPassword()));
             if(hashedPassword.equals(checkUser.getHashedPassword()))
-                return new LoginResponse("User logged in", null);
+                return new LoginResponse("User logged in");
             throw new Exception("Password don't match");
         }catch (Exception e){
             log.error(e.toString());
             throw new Exception(e.toString());
         }
-    }
-
-    public User loadUserByUsername(String username){
-        UserTable checkUser = userRepo.findByUsername(username);
-        if(checkUser != null)
-            return new User(checkUser.getUsername(), checkUser.getHashedPassword(), new ArrayList<>());
-        else
-            return new User(null, null, null);
     }
 
     @Transactional

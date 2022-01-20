@@ -6,11 +6,16 @@ import com.example.redditbackend.request.*;
 import com.example.redditbackend.response.HeartbeatResponse;
 import com.example.redditbackend.response.LoginResponse;
 import com.example.redditbackend.response.RegisterResponse;
+import com.example.redditbackend.security.JwtUtil;
 import com.example.redditbackend.service.UserService;
+import com.example.redditbackend.utility.SHA256;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Date;
@@ -22,6 +27,12 @@ public class UserController {
     @Autowired
     private UserService userService;
 
+    @Autowired
+    private AuthenticationManager authenticationManager;
+
+    @Autowired
+    private JwtUtil jwtTokenUtil;
+
     @GetMapping("/heartbeat")
     public ResponseEntity<HeartbeatResponse> heartbeat(){
         HeartbeatResponse heartbeatResponse = new HeartbeatResponse("Working", new Date());
@@ -31,6 +42,7 @@ public class UserController {
     @PostMapping("/u/register")
     public ResponseEntity register(@RequestBody RegisterRequest registerRequest){
         try{
+            log.info("contorller register");
             RegisterResponse response = userService.register(registerRequest);
             return new ResponseEntity<RegisterResponse>(response, HttpStatus.OK);
         }catch(Exception e){
@@ -42,8 +54,13 @@ public class UserController {
     @PostMapping("/u/login")
     public ResponseEntity login(@RequestBody LoginRequest loginRequest){
         try{
-            LoginResponse response = userService.login(loginRequest);
-            return new ResponseEntity(response, HttpStatus.OK);
+            authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(loginRequest.getUsername(), SHA256.toHexString(SHA256.getSHA(loginRequest.getPassword()))));
+            final UserDetails userDetails = userService.loadUserByUsername(loginRequest.getUsername());
+            final String jwt = jwtTokenUtil.generateToken(userDetails);
+            return new ResponseEntity(new LoginResponse("ok", jwt), HttpStatus.OK);
+//            LoginResponse response = userService.login(loginRequest);
+//            return new ResponseEntity(response, HttpStatus.OK);
         }catch(Exception e){
             log.error(e.toString());
             return new ResponseEntity<String>("Unable to login", HttpStatus.CONFLICT);

@@ -7,6 +7,10 @@ import com.example.redditbackend.response.*;
 import com.example.redditbackend.utility.SHA256;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.userdetails.User;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 import javax.transaction.Transactional;
@@ -14,7 +18,7 @@ import java.util.*;
 
 @Service
 @Log4j2
-public class UserService {
+public class UserService implements UserDetailsService {
     @Autowired
     protected UserTableRepository userRepo;
 
@@ -46,8 +50,8 @@ public class UserService {
             newUser.setHashedPassword(SHA256.toHexString(SHA256.getSHA(registerRequest.getPassword())));
             newUser.setJoinDate(new Date());
             newUser.setLastLoggedIn(new Date());
-            userRepo.save(newUser);
-            return new RegisterResponse("User registered successfully");
+            UserTable savedUser = userRepo.save(newUser);
+            return new RegisterResponse("User registered successfully", savedUser.getUsername(), savedUser.getUserId());
         }catch (Exception e){
             log.error(e.toString());
             throw new Exception(e.toString());
@@ -62,7 +66,7 @@ public class UserService {
                 throw new Exception("Unable to find username");
             String hashedPassword = SHA256.toHexString(SHA256.getSHA(loginRequest.getPassword()));
             if(hashedPassword.equals(checkUser.getHashedPassword()))
-                return new LoginResponse("User logged in");
+                return new LoginResponse("User logged in", checkUser.getUserId(), checkUser.getUsername());
             throw new Exception("Password don't match");
         }catch (Exception e){
             log.error(e.toString());
@@ -751,5 +755,11 @@ public class UserService {
             log.error(e);
             throw new Exception("Unable to transfer ownership because: "+e);
         }
+    }
+
+    @Override
+    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+        UserTable user = userRepo.findByUsername(username);
+        return new User(user.getUsername(), user.getHashedPassword(), new ArrayList<>());
     }
 }

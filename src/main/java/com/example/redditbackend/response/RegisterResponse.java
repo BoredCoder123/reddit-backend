@@ -10,5 +10,14 @@ import lombok.Setter;
 @AllArgsConstructor
 @NoArgsConstructor
 public class RegisterResponse {
-    String registerResponse;
+    private String registerResponse;
+    private String username;
+    private Integer userId;
+    private String jwt;
+
+    public RegisterResponse(String registerResponse, String username, Integer userId){
+        this.registerResponse = registerResponse;
+        this.username = username;
+        this.userId = userId;
+    }
 }
